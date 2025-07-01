@@ -1,28 +1,34 @@
-// src/app/core/interceptors/auth.interceptor.ts
+// src/app/core/interceptors/auth.interceptor.ts - KORRIGIERTE VERSION
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { Router } from '@angular/router';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const router = inject(Router);
-  
-  // Hole Auth Token aus localStorage (später über AuthService)
+  // Hole Auth Token aus localStorage
   const token = localStorage.getItem('auth_token');
   
   // URLs die keine Authentifizierung benötigen
   const publicUrls = [
-    '/auth/login',
-    '/auth/register',
-    '/auth/refresh'
+    '/auth-token/',      // Django Token Auth Endpoint
+    '/auth/login/',      // Falls du custom Login-Endpoint hast
+    '/auth/register/',   // Registrierung
+    '/auth/refresh/'     // Token Refresh
   ];
   
   // Prüfe ob die URL öffentlich ist
   const isPublicUrl = publicUrls.some(url => req.url.includes(url));
   
+  // DEBUG: Entferne diese Logs später
+  console.log('Auth Interceptor:', {
+    url: req.url,
+    hasToken: !!token,
+    isPublicUrl,
+    token: token ? token.substring(0, 10) + '...' : null
+  });
+  
   // Wenn Token vorhanden und nicht öffentliche URL, füge Authorization Header hinzu
   if (token && !isPublicUrl) {
-    // Für Django mit Token Authentication verwenden wir "Token" prefix
-    // Falls du JWT verwendest, ändere zu "Bearer"
+    console.log('Adding auth header: Token ' + token);
+    
     const authReq = req.clone({
       setHeaders: {
         'Authorization': `Token ${token}`,
@@ -34,11 +40,5 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   }
   
   // Für öffentliche URLs oder wenn kein Token vorhanden
-  const publicReq = req.clone({
-    setHeaders: {
-      'Content-Type': 'application/json'
-    }
-  });
-  
-  return next(publicReq);
+  return next(req);
 };

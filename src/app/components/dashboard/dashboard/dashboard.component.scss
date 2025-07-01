@@ -1,0 +1,207 @@
+// dashboard.component.scss
+
+// Navbar Styling
+.navbar {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  
+  .navbar-brand {
+    font-size: 1.5rem;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      transform: scale(1.05);
+    }
+    
+    .bi {
+      font-size: 1.3em;
+    }
+  }
+  
+  .nav-link {
+    transition: all 0.3s ease;
+    border-radius: 0.5rem;
+    
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+  }
+}
+
+// Welcome Section
+.welcome-section {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1px solid #dee2e6;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  }
+  
+  .display-5 {
+    background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+// Hover Cards
+.hover-card {
+  transition: all 0.3s ease;
+  cursor: pointer;
+  
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+    
+    .feature-icon {
+      transform: scale(1.1);
+    }
+    
+    .btn {
+      transform: translateY(-2px);
+    }
+  }
+  
+  .card-body {
+    padding: 2rem 1.5rem;
+  }
+}
+
+// Feature Icons
+.feature-icon {
+  font-size: 3rem;
+  transition: all 0.3s ease;
+}
+
+// Buttons
+.btn {
+  transition: all 0.3s ease;
+  font-weight: 500;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .bi {
+    transition: transform 0.3s ease;
+  }
+  
+  &:hover .bi {
+    transform: translateX(3px);
+  }
+}
+
+// Stats Cards
+.stat-card {
+  transition: all 0.3s ease;
+  border-radius: 1rem;
+  
+  &:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  }
+  
+  .card-body {
+    padding: 1.5rem;
+  }
+}
+
+.stat-icon {
+  font-size: 2rem;
+  opacity: 0.9;
+}
+
+// Card Titles
+.card-title {
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+// Debug Section
+.card.border-primary {
+  .card-header {
+    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+    
+    h6 {
+      font-weight: 600;
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .container {
+    padding: 0 1rem;
+  }
+  
+  .welcome-section {
+    padding: 2rem !important;
+    
+    .display-5 {
+      font-size: 2rem;
+    }
+  }
+  
+  .hover-card .card-body {
+    padding: 1.5rem 1rem;
+  }
+  
+  .feature-icon {
+    font-size: 2.5rem;
+  }
+  
+  .navbar-brand {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .stat-card {
+    margin-bottom: 1rem;
+  }
+  
+  .g-4 {
+    gap: 1rem !important;
+  }
+  
+  .welcome-section {
+    .display-5 {
+      font-size: 1.75rem;
+    }
+    
+    .fs-5 {
+      font-size: 1.1rem !important;
+    }
+  }
+}
+
+// Animations
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.welcome-section,
+.hover-card,
+.stat-card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+// Staggered animation for cards
+.hover-card:nth-child(1) { animation-delay: 0.1s; }
+.hover-card:nth-child(2) { animation-delay: 0.2s; }
+.hover-card:nth-child(3) { animation-delay: 0.3s; }
+
+.stat-card:nth-child(1) { animation-delay: 0.4s; }
+.stat-card:nth-child(2) { animation-delay: 0.5s; }
+.stat-card:nth-child(3) { animation-delay: 0.6s; }
+.stat-card:nth-child(4) { animation-delay: 0.7s; }

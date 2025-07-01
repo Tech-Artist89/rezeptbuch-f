@@ -1,10 +1,10 @@
-// src/app/services/auth.service.ts
+// src/app/services/auth.service.ts - KORRIGIERTE VERSION
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { map, tap, catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
-import { ApiConstants } from '../utils/api.constants';
+import { environment } from '../environments/environment';
 import { User } from '../models/user.model';
 import { ApiError } from '../models/api-response.model';
 
@@ -43,20 +43,37 @@ export class AuthService {
     private http: HttpClient,
     private router: Router
   ) {
-    // Prüfe beim Start ob Token noch gültig ist
-    this.validateTokenOnInit();
+    // ENTFERNT: validateTokenOnInit() - das verursacht den 403 Error beim Start!
+    // Token-Validierung passiert nur bei tatsächlicher API-Nutzung
   }
 
   /**
-   * Benutzer einloggen
+   * Benutzer einloggen - FIX: Verwende Django's Standard Auth-Endpoints
    */
   login(credentials: LoginCredentials): Observable<AuthResponse> {
-    // Da dein Backend keine separaten Auth-Endpoints hat, 
-    // nutzen wir Django's Standard Token Authentication
-    return this.http.post<AuthResponse>(`${ApiConstants.USERS.BASE}/auth/login/`, credentials)
+    // Django DRF Standard-Endpoint für Token Authentication
+    return this.http.post<{ token: string }>(`${environment.apiUrl}/auth-token/`, credentials)
       .pipe(
+        map(response => {
+          // Simuliere User-Objekt - in echter Implementierung würde das Backend auch User-Daten zurückgeben
+          const user: User = {
+            id: 0, // Wird später durch getCurrentUser() ersetzt
+            username: credentials.username,
+            email: '',
+            first_name: '',
+            last_name: '',
+            date_joined: new Date().toISOString()
+          };
+          
+          return {
+            token: response.token,
+            user: user
+          };
+        }),
         tap(response => {
           this.setSession(response.token, response.user);
+          // Nach Login aktuelle Benutzerdaten laden
+          this.getCurrentUser().subscribe();
         }),
         catchError(this.handleAuthError)
       );
@@ -66,7 +83,7 @@ export class AuthService {
    * Benutzer registrieren
    */
   register(userData: RegisterData): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${ApiConstants.USERS.BASE}/auth/register/`, userData)
+    return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register/`, userData)
       .pipe(
         tap(response => {
           this.setSession(response.token, response.user);
@@ -79,13 +96,9 @@ export class AuthService {
    * Benutzer ausloggen
    */
   logout(): void {
-    // Optional: Backend über Logout informieren
-    this.http.post(`${ApiConstants.USERS.BASE}/auth/logout/`, {})
-      .subscribe({
-        complete: () => this.clearSession()
-      });
+    // Optional: Backend über Logout informieren (falls Endpoint existiert)
+    // this.http.post(`${environment.apiUrl}/auth/logout/`, {}).subscribe();
     
-    // Auch bei Fehler Session clearen
     this.clearSession();
   }
 
@@ -93,14 +106,14 @@ export class AuthService {
    * Aktueller Benutzer abrufen (vom Backend)
    */
   getCurrentUser(): Observable<User> {
-    return this.http.get<User>(ApiConstants.USERS.ME)
+    return this.http.get<User>(`${environment.apiUrl}${environment.endpoints.userMe}`)
       .pipe(
         tap(user => {
           this.currentUserSubject.next(user);
           this.saveUserToStorage(user);
         }),
         catchError(error => {
-          if (error.status === 401) {
+          if (error.status === 401 || error.status === 403) {
             this.clearSession();
           }
           return throwError(() => error);
@@ -181,21 +194,6 @@ export class AuthService {
    */
   private saveUserToStorage(user: User): void {
     localStorage.setItem(this.USER_KEY, JSON.stringify(user));
-  }
-
-  /**
-   * Token beim App-Start validieren
-   */
-  private validateTokenOnInit(): void {
-    if (this.hasValidToken()) {
-      // Versuche aktuellen Benutzer zu laden um Token zu validieren
-      this.getCurrentUser().subscribe({
-        error: () => {
-          // Token ist ungültig, Session clearen
-          this.clearSession();
-        }
-      });
-    }
   }
 
   /**

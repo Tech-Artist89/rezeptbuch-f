@@ -1,1 +1,108 @@
-<p>user-login works!</p>
+<div class="container-fluid vh-100 d-flex align-items-center justify-content-center bg-light">
+  <div class="row w-100 justify-content-center">
+    <div class="col-md-6 col-lg-4">
+      <div class="card shadow">
+        <div class="card-body p-5">
+          <!-- Header -->
+          <div class="text-center mb-4">
+            <h2 class="card-title h3 mb-3">
+              <i class="bi bi-book text-primary me-2"></i>
+              Rezeptbuch
+            </h2>
+            <p class="text-muted">Bei deinem Account anmelden</p>
+          </div>
+
+          <!-- Fehlermeldung -->
+          <div *ngIf="errorMessage" class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            {{ errorMessage }}
+          </div>
+
+          <!-- Loading Indikator -->
+          <div *ngIf="isLoading" class="text-center mb-3">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Lädt...</span>
+            </div>
+            <p class="mt-2 text-muted small">Anmeldung läuft...</p>
+          </div>
+
+          <!-- Login Form -->
+          <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+            <!-- Benutzername -->
+            <div class="mb-3">
+              <label for="username" class="form-label">
+                <i class="bi bi-person me-1"></i>
+                Benutzername
+              </label>
+              <input
+                id="username"
+                type="text"
+                formControlName="username"
+                [class]="'form-control ' + (loginForm.get('username')?.invalid && loginForm.get('username')?.touched ? 'is-invalid' : '')"
+                placeholder="Dein Benutzername"
+                autocomplete="username"
+              />
+              <div *ngIf="loginForm.get('username')?.invalid && loginForm.get('username')?.touched" 
+                   class="invalid-feedback">
+                Benutzername ist erforderlich
+              </div>
+            </div>
+
+            <!-- Passwort -->
+            <div class="mb-4">
+              <label for="password" class="form-label">
+                <i class="bi bi-lock me-1"></i>
+                Passwort
+              </label>
+              <input
+                id="password"
+                type="password"
+                formControlName="password"
+                [class]="'form-control ' + (loginForm.get('password')?.invalid && loginForm.get('password')?.touched ? 'is-invalid' : '')"
+                placeholder="Dein Passwort"
+                autocomplete="current-password"
+              />
+              <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" 
+                   class="invalid-feedback">
+                Passwort ist erforderlich
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="d-grid">
+              <button
+                type="submit"
+                [disabled]="loginForm.invalid || isLoading"
+                class="btn btn-primary btn-lg"
+              >
+                <i class="bi bi-box-arrow-in-right me-2"></i>
+                {{ isLoading ? 'Anmeldung läuft...' : 'Anmelden' }}
+              </button>
+            </div>
+          </form>
+
+          <!-- Debug Info (nur für Entwicklung) -->
+          <div class="mt-4 p-3 bg-light rounded small" *ngIf="debugMode">
+            <h6 class="fw-bold mb-2">
+              <i class="bi bi-bug me-1"></i>
+              Debug Info:
+            </h6>
+            <ul class="list-unstyled mb-0 small">
+              <li><strong>Form Valid:</strong> 
+                <span [class]="loginForm.valid ? 'text-success' : 'text-danger'">
+                  {{ loginForm.valid ? 'Ja' : 'Nein' }}
+                </span>
+              </li>
+              <li><strong>Token vorhanden:</strong> 
+                <span [class]="hasToken ? 'text-success' : 'text-warning'">
+                  {{ hasToken ? 'Ja' : 'Nein' }}
+                </span>
+              </li>
+              <li><strong>Aktueller User:</strong> {{ currentUser?.username || 'Nicht eingeloggt' }}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,108 @@
+// user-login.component.scss
+
+.vh-100 {
+  min-height: 100vh;
+}
+
+.card {
+  border: none;
+  border-radius: 1rem;
+  
+  .card-body {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+  }
+}
+
+.btn-lg {
+  padding: 0.75rem 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+  }
+}
+
+.form-control {
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: 2px solid #e9ecef;
+  transition: all 0.3s ease;
+  
+  &:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+    transform: translateY(-1px);
+  }
+  
+  &.is-invalid {
+    border-color: #dc3545;
+  }
+}
+
+.form-label {
+  font-weight: 500;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+// Loading Animation
+.spinner-border {
+  width: 2rem;
+  height: 2rem;
+}
+
+// Alert Styling
+.alert {
+  border-radius: 0.75rem;
+  border: none;
+  
+  &.alert-danger {
+    background: linear-gradient(135deg, #f8d7da 0%, #f1aeb5 100%);
+    color: #721c24;
+  }
+}
+
+// Card Shadow Animation
+.card {
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+  }
+}
+
+// Background Gradient
+.bg-light {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+// Icon Styling
+.bi {
+  font-size: 1.1em;
+}
+
+// Debug Box Styling
+.bg-light.rounded {
+  background-color: #f8f9fa !important;
+  border: 1px solid #e9ecef;
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .col-md-6 {
+    margin: 1rem;
+  }
+  
+  .card-body {
+    padding: 2rem !important;
+  }
+  
+  .h3 {
+    font-size: 1.5rem;
+  }
+}
