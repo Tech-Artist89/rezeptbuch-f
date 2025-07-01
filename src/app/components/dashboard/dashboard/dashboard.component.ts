@@ -1,21 +1,22 @@
 // src/app/components/dashboard/dashboard/dashboard.component.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   currentUser: any = null;
   isLoggedIn = false;
   token: string | null = null;
   debugMode = true; // Für Entwicklung auf true setzen
+  showUserMenu = false;
 
   constructor(
     private authService: AuthService,
@@ -54,11 +55,32 @@ export class DashboardComponent implements OnInit {
         }
       }
     });
+
+    // Event Listener für Klicks außerhalb des User-Menüs
+    document.addEventListener('click', this.handleDocumentClick.bind(this));
+  }
+
+  ngOnDestroy() {
+    // Event Listener entfernen
+    document.removeEventListener('click', this.handleDocumentClick.bind(this));
   }
 
   logout() {
     console.log('Logout durchgeführt');
     this.authService.logout();
     // Der AuthService leitet automatisch zur Login-Seite weiter
+  }
+
+  toggleUserMenu() {
+    this.showUserMenu = !this.showUserMenu;
+  }
+
+  private handleDocumentClick(event: Event) {
+    const target = event.target as HTMLElement;
+    const userMenu = document.querySelector('.user-menu');
+    
+    if (userMenu && !userMenu.contains(target)) {
+      this.showUserMenu = false;
+    }
   }
 }

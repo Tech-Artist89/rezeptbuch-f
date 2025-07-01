@@ -1,180 +1,258 @@
-<!-- Header/Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow">
-  <div class="container">
-    <a class="navbar-brand fw-bold" href="#">
-      <i class="bi bi-book me-2"></i>
-      Rezeptbuch
-    </a>
-    
-    <div class="navbar-nav ms-auto">
-      <div class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" 
-           data-bs-toggle="dropdown" aria-expanded="false">
-          <i class="bi bi-person-circle me-2"></i>
-          {{ currentUser?.username || 'Benutzer' }}
-        </a>
-        <ul class="dropdown-menu dropdown-menu-end">
-          <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Profil</a></li>
-          <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Einstellungen</a></li>
-          <li><hr class="dropdown-divider"></li>
-          <li>
-            <a class="dropdown-item text-danger" href="#" (click)="logout()">
-              <i class="bi bi-box-arrow-right me-2"></i>Abmelden
-            </a>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</nav>
-
-<!-- Main Content -->
-<div class="container my-5">
-  <!-- Welcome Section -->
-  <div class="row mb-5">
-    <div class="col-12">
-      <div class="welcome-section bg-light rounded-3 p-5 text-center">
-        <h1 class="display-5 fw-bold text-primary">
-          <i class="bi bi-house-heart me-3"></i>
-          Willkommen im Rezeptbuch!
-        </h1>
-        <p class="fs-5 text-muted mb-4">
-          Hallo {{ currentUser?.username }}! Du bist erfolgreich eingeloggt.
-        </p>
-        <p class="text-muted">
-          Hier kannst du deine Rezepte verwalten, Einkaufslisten erstellen und deinen Wochenplan organisieren.
-        </p>
-      </div>
-    </div>
+<!-- Dashboard Container -->
+<div class="dashboard-container">
+  <!-- Animated Background -->
+  <div class="dashboard-bg">
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="bg-orb orb-3"></div>
   </div>
 
-  <!-- Quick Actions -->
-  <div class="row g-4 mb-5">
-    <div class="col-md-4">
-      <div class="card h-100 border-0 shadow-sm hover-card">
-        <div class="card-body text-center p-4">
-          <div class="mb-3">
-            <i class="bi bi-journal-text text-primary feature-icon"></i>
+  <!-- Navigation Header -->
+  <nav class="dashboard-nav">
+    <div class="nav-content">
+      <!-- Brand -->
+      <div class="nav-brand">
+        <div class="brand-icon">
+          <i class="bi bi-book"></i>
+        </div>
+        <span class="brand-text">Rezeptbuch</span>
+      </div>
+
+      <!-- User Menu -->
+      <div class="user-menu">
+        <div class="user-avatar" (click)="toggleUserMenu()">
+          <i class="bi bi-person-circle"></i>
+        </div>
+        <div class="user-dropdown" [class.active]="showUserMenu">
+          <div class="user-info">
+            <div class="user-name">{{ currentUser?.username || 'Benutzer' }}</div>
+            <div class="user-email">{{ currentUser?.email || 'email@example.com' }}</div>
           </div>
-          <h5 class="card-title">Rezepte verwalten</h5>
-          <p class="card-text text-muted">
-            Erstelle, bearbeite und organisiere deine Lieblingsrezepte
-          </p>
-          <button class="btn btn-outline-primary">
-            <i class="bi bi-arrow-right me-2"></i>Zu den Rezepten
+          <div class="dropdown-divider"></div>
+          <a href="#" class="dropdown-item">
+            <i class="bi bi-person"></i>
+            <span>Profil</span>
+          </a>
+          <a href="#" class="dropdown-item">
+            <i class="bi bi-gear"></i>
+            <span>Einstellungen</span>
+          </a>
+          <div class="dropdown-divider"></div>
+          <button class="dropdown-item logout" (click)="logout()">
+            <i class="bi bi-box-arrow-right"></i>
+            <span>Abmelden</span>
           </button>
         </div>
       </div>
     </div>
-    
-    <div class="col-md-4">
-      <div class="card h-100 border-0 shadow-sm hover-card">
-        <div class="card-body text-center p-4">
-          <div class="mb-3">
-            <i class="bi bi-cart3 text-success feature-icon"></i>
-          </div>
-          <h5 class="card-title">Einkaufslisten</h5>
-          <p class="card-text text-muted">
-            Erstelle intelligente Einkaufslisten basierend auf deinen Rezepten
+  </nav>
+
+  <!-- Main Content -->
+  <main class="dashboard-main">
+    <!-- Welcome Hero Section -->
+    <section class="welcome-hero">
+      <div class="hero-content">
+        <div class="hero-text">
+          <h1 class="hero-title">
+            <span class="gradient-text">Willkommen zurück,</span>
+            <span class="user-name">{{ currentUser?.username }}!</span>
+          </h1>
+          <p class="hero-subtitle">
+            Bereit für neue kulinarische Abenteuer? Deine Küche wartet auf dich.
           </p>
-          <button class="btn btn-outline-success">
-            <i class="bi bi-arrow-right me-2"></i>Zu den Listen
+        </div>
+        <div class="hero-visual">
+          <div class="floating-card card-1">
+            <i class="bi bi-journal-text"></i>
+          </div>
+          <div class="floating-card card-2">
+            <i class="bi bi-cart3"></i>
+          </div>
+          <div class="floating-card card-3">
+            <i class="bi bi-calendar-week"></i>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Actions Grid -->
+    <section class="quick-actions">
+      <h2 class="section-title">Schnellzugriff</h2>
+      <div class="actions-grid">
+        <!-- Recipes Action -->
+        <div class="action-card recipes" routerLink="/recipes">
+          <div class="card-bg"></div>
+          <div class="card-content">
+            <div class="card-icon">
+              <i class="bi bi-journal-text"></i>
+            </div>
+            <h3 class="card-title">Rezepte</h3>
+            <p class="card-description">
+              Entdecke und verwalte deine Lieblingsrezepte
+            </p>
+            <div class="card-arrow">
+              <i class="bi bi-arrow-right"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Shopping Lists Action -->
+        <div class="action-card shopping" routerLink="/shopping">
+          <div class="card-bg"></div>
+          <div class="card-content">
+            <div class="card-icon">
+              <i class="bi bi-cart3"></i>
+            </div>
+            <h3 class="card-title">Einkaufslisten</h3>
+            <p class="card-description">
+              Erstelle smarte Listen für deinen Einkauf
+            </p>
+            <div class="card-arrow">
+              <i class="bi bi-arrow-right"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Meal Planner Action -->
+        <div class="action-card planner" routerLink="/planner">
+          <div class="card-bg"></div>
+          <div class="card-content">
+            <div class="card-icon">
+              <i class="bi bi-calendar-week"></i>
+            </div>
+            <h3 class="card-title">Wochenplaner</h3>
+            <p class="card-description">
+              plane deine Mahlzeiten für die ganze Woche
+            </p>
+            <div class="card-arrow">
+              <i class="bi bi-arrow-right"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ingredients Action -->
+        <div class="action-card ingredients" routerLink="/ingredients">
+          <div class="card-bg"></div>
+          <div class="card-content">
+            <div class="card-icon">
+              <i class="bi bi-egg-fried"></i>
+            </div>
+            <h3 class="card-title">Zutaten</h3>
+            <p class="card-description">
+              Verwalte deine Zutatenbibliothek
+            </p>
+            <div class="card-arrow">
+              <i class="bi bi-arrow-right"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Statistics Section -->
+    <section class="statistics">
+      <h2 class="section-title">Deine Küchen-Statistiken</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon recipes-icon">
+            <i class="bi bi-journal-text"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">0</div>
+            <div class="stat-label">Rezepte</div>
+          </div>
+          <div class="stat-trend">
+            <i class="bi bi-arrow-up"></i>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon shopping-icon">
+            <i class="bi bi-cart3"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">0</div>
+            <div class="stat-label">Einkaufslisten</div>
+          </div>
+          <div class="stat-trend">
+            <i class="bi bi-arrow-up"></i>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon planner-icon">
+            <i class="bi bi-calendar-week"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">0</div>
+            <div class="stat-label">Geplante Mahlzeiten</div>
+          </div>
+          <div class="stat-trend">
+            <i class="bi bi-arrow-up"></i>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon ingredients-icon">
+            <i class="bi bi-egg-fried"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">0</div>
+            <div class="stat-label">Zutaten</div>
+          </div>
+          <div class="stat-trend">
+            <i class="bi bi-arrow-up"></i>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recent Activity Section -->
+    <section class="recent-activity">
+      <h2 class="section-title">Letzte Aktivitäten</h2>
+      <div class="activity-container">
+        <div class="activity-placeholder">
+          <div class="placeholder-icon">
+            <i class="bi bi-clock-history"></i>
+          </div>
+          <h3>Noch keine Aktivitäten</h3>
+          <p>Sobald du anfängst Rezepte zu erstellen oder zu planen, siehst du hier deine letzten Aktivitäten.</p>
+          <button class="cta-button" routerLink="/recipes/new">
+            <span>Erstes Rezept erstellen</span>
+            <i class="bi bi-plus-circle"></i>
           </button>
         </div>
       </div>
-    </div>
-    
-    <div class="col-md-4">
-      <div class="card h-100 border-0 shadow-sm hover-card">
-        <div class="card-body text-center p-4">
-          <div class="mb-3">
-            <i class="bi bi-calendar-week text-warning feature-icon"></i>
+    </section>
+
+    <!-- Debug Section -->
+    <section class="debug-section" *ngIf="debugMode">
+      <div class="debug-card">
+        <div class="debug-header">
+          <i class="bi bi-bug"></i>
+          <span>Debug Information</span>
+        </div>
+        <div class="debug-grid">
+          <div class="debug-item">
+            <span class="debug-label">Eingeloggt:</span>
+            <span [class]="'debug-value ' + (isLoggedIn ? 'success' : 'error')">
+              {{ isLoggedIn ? 'Ja' : 'Nein' }}
+            </span>
           </div>
-          <h5 class="card-title">Wochenplaner</h5>
-          <p class="card-text text-muted">
-            Plane deine Mahlzeiten für die ganze Woche im Voraus
-          </p>
-          <button class="btn btn-outline-warning">
-            <i class="bi bi-arrow-right me-2"></i>Zum Planer
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Stats Section -->
-  <div class="row g-4 mb-5">
-    <div class="col-md-3">
-      <div class="card border-0 bg-primary text-white stat-card">
-        <div class="card-body text-center">
-          <i class="bi bi-journal-text stat-icon"></i>
-          <h4 class="mt-2 mb-0">0</h4>
-          <small>Rezepte</small>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 bg-success text-white stat-card">
-        <div class="card-body text-center">
-          <i class="bi bi-cart3 stat-icon"></i>
-          <h4 class="mt-2 mb-0">0</h4>
-          <small>Einkaufslisten</small>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 bg-warning text-white stat-card">
-        <div class="card-body text-center">
-          <i class="bi bi-calendar-week stat-icon"></i>
-          <h4 class="mt-2 mb-0">0</h4>
-          <small>Geplante Mahlzeiten</small>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 bg-info text-white stat-card">
-        <div class="card-body text-center">
-          <i class="bi bi-egg-fried stat-icon"></i>
-          <h4 class="mt-2 mb-0">0</h4>
-          <small>Zutaten</small>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Debug Info -->
-  <div class="row" *ngIf="debugMode">
-    <div class="col-12">
-      <div class="card border-primary">
-        <div class="card-header bg-primary text-white">
-          <h6 class="mb-0">
-            <i class="bi bi-bug me-2"></i>
-            Debug Information
-          </h6>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-4">
-              <strong>Eingeloggt:</strong> 
-              <span [class]="isLoggedIn ? 'text-success' : 'text-danger'">
-                {{ isLoggedIn ? 'Ja' : 'Nein' }}
-              </span>
-            </div>
-            <div class="col-md-4">
-              <strong>Token:</strong> 
-              <span class="text-muted small">
-                {{ token ? token.substring(0, 20) + '...' : 'Nicht vorhanden' }}
-              </span>
-            </div>
-            <div class="col-md-4">
-              <strong>Benutzer:</strong> 
-              <span class="text-muted">
-                {{ currentUser?.username || 'Nicht verfügbar' }}
-              </span>
-            </div>
+          <div class="debug-item">
+            <span class="debug-label">Token:</span>
+            <span class="debug-value">
+              {{ token ? token.substring(0, 20) + '...' : 'Nicht vorhanden' }}
+            </span>
+          </div>
+          <div class="debug-item">
+            <span class="debug-label">Benutzer:</span>
+            <span class="debug-value">
+              {{ currentUser?.username || 'Nicht verfügbar' }}
+            </span>
           </div>
         </div>
       </div>
-    </div>
-  </div>
+    </section>
+  </main>
 </div>

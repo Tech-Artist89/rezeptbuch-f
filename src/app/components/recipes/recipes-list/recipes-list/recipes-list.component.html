@@ -1,0 +1,231 @@
+<!-- Recipe List Container -->
+<div class="recipes-container">
+  <!-- Animated Background -->
+  <div class="recipes-bg">
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+  </div>
+
+  <!-- Header Section -->
+  <header class="recipes-header">
+    <div class="header-content">
+      <div class="header-text">
+        <h1 class="page-title">
+          <i class="bi bi-journal-text"></i>
+          <span class="gradient-text">Meine Rezepte</span>
+        </h1>
+        <p class="page-subtitle">
+          Entdecke und verwalte deine kulinarischen Kreationen
+        </p>
+      </div>
+      <button class="create-btn" routerLink="/recipes/new">
+        <span class="btn-content">
+          <i class="bi bi-plus-circle"></i>
+          <span>Neues Rezept</span>
+        </span>
+        <div class="btn-bg"></div>
+      </button>
+    </div>
+  </header>
+
+  <!-- Search and Filter Section -->
+  <section class="search-section">
+    <div class="search-container">
+      <!-- Search Bar -->
+      <div class="search-bar">
+        <div class="search-input-container">
+          <i class="bi bi-search search-icon"></i>
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (input)="onSearch()"
+            placeholder="Rezepte durchsuchen..."
+            class="search-input"
+          />
+          <button *ngIf="searchTerm" (click)="clearSearch()" class="clear-btn">
+            <i class="bi bi-x"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Filter Buttons -->
+      <div class="filter-container">
+        <div class="filter-group">
+          <button 
+            *ngFor="let difficulty of difficulties" 
+            [class]="'filter-btn ' + (selectedDifficulty === difficulty.value ? 'active' : '')"
+            (click)="filterByDifficulty(difficulty.value)"
+          >
+            <i [class]="difficulty.icon"></i>
+            <span>{{ difficulty.label }}</span>
+          </button>
+        </div>
+        
+        <div class="sort-container">
+          <button class="sort-btn" (click)="toggleSortMenu()">
+            <i class="bi bi-sort-down"></i>
+            <span>{{ currentSort.label }}</span>
+            <i class="bi bi-chevron-down"></i>
+          </button>
+          
+          <div class="sort-dropdown" [class.active]="showSortMenu">
+            <button 
+              *ngFor="let sort of sortOptions" 
+              class="sort-option"
+              (click)="selectSort(sort)"
+            >
+              <i [class]="sort.icon"></i>
+              <span>{{ sort.label }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-section">
+    <div class="loading-spinner">
+      <div class="spinner"></div>
+    </div>
+    <p>Rezepte werden geladen...</p>
+  </div>
+
+  <!-- Recipes Grid -->
+  <section *ngIf="!isLoading" class="recipes-section">
+    <!-- Results Info -->
+    <div class="results-info" *ngIf="filteredRecipes.length > 0">
+      <span class="results-count">{{ filteredRecipes.length }} Rezept{{ filteredRecipes.length !== 1 ? 'e' : '' }} gefunden</span>
+      <span *ngIf="searchTerm || selectedDifficulty" class="clear-filters" (click)="clearAllFilters()">
+        <i class="bi bi-x-circle"></i>
+        Filter zurücksetzen
+      </span>
+    </div>
+
+    <!-- Recipes Grid -->
+    <div class="recipes-grid" *ngIf="filteredRecipes.length > 0">
+      <div 
+        *ngFor="let recipe of filteredRecipes; trackBy: trackByRecipeId" 
+        class="recipe-card"
+        [routerLink]="['/recipes', recipe.id]"
+      >
+        <!-- Recipe Image -->
+        <div class="recipe-image">
+          <img 
+            *ngIf="recipe.image" 
+            [src]="recipe.image" 
+            [alt]="recipe.title"
+            (error)="onImageError($event)"
+          />
+          <div *ngIf="!recipe.image" class="image-placeholder">
+            <i class="bi bi-image"></i>
+          </div>
+          
+          <!-- Difficulty Badge -->
+          <div class="difficulty-badge" [attr.data-difficulty]="recipe.difficulty">
+            <i [class]="getDifficultyIcon(recipe.difficulty)"></i>
+            <span>{{ getDifficultyLabel(recipe.difficulty) }}</span>
+          </div>
+          
+          <!-- Favorite Button -->
+          <button class="favorite-btn" (click)="toggleFavorite(recipe, $event)">
+            <i [class]="isRecipeFavorite(recipe.id) ? 'bi bi-heart-fill' : 'bi bi-heart'"></i>
+          </button>
+        </div>
+
+        <!-- Recipe Info -->
+        <div class="recipe-info">
+          <h3 class="recipe-title">{{ recipe.title }}</h3>
+          <p class="recipe-description">{{ recipe.description | slice:0:120 }}{{ recipe.description.length > 120 ? '...' : '' }}</p>
+          
+          <!-- Recipe Meta -->
+          <div class="recipe-meta">
+            <div class="meta-item">
+              <i class="bi bi-clock"></i>
+              <span>{{ recipe.total_time }} Min</span>
+            </div>
+            <div class="meta-item">
+              <i class="bi bi-people"></i>
+              <span>{{ recipe.servings }} Portionen</span>
+            </div>
+            <div class="meta-item">
+              <i class="bi bi-person"></i>
+              <span>{{ recipe.author }}</span>
+            </div>
+          </div>
+
+          <!-- Categories -->
+          <div class="recipe-categories" *ngIf="recipe.categories.length > 0">
+            <span 
+              *ngFor="let category of recipe.categories | slice:0:3" 
+              class="category-tag"
+            >
+              {{ category.name }}
+            </span>
+            <span *ngIf="recipe.categories.length > 3" class="more-categories">
+              +{{ recipe.categories.length - 3 }}
+            </span>
+          </div>
+
+          <!-- Recipe Actions -->
+          <div class="recipe-actions">
+            <button class="action-btn edit" [routerLink]="['/recipes', recipe.id, 'edit']" (click)="$event.stopPropagation()">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button class="action-btn delete" (click)="confirmDelete(recipe, $event)">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredRecipes.length === 0 && !isLoading">
+      <div class="empty-content">
+        <div class="empty-icon">
+          <i class="bi bi-journal-x"></i>
+        </div>
+        <h3 *ngIf="!searchTerm && !selectedDifficulty">Noch keine Rezepte</h3>
+        <h3 *ngIf="searchTerm || selectedDifficulty">Keine Rezepte gefunden</h3>
+        <p *ngIf="!searchTerm && !selectedDifficulty">
+          Du hast noch keine Rezepte erstellt. Erstelle dein erstes Rezept und beginne deine kulinarische Sammlung.
+        </p>
+        <p *ngIf="searchTerm || selectedDifficulty">
+          Keine Rezepte entsprechen deinen Suchkriterien. Versuche es mit anderen Begriffen oder entferne die Filter.
+        </p>
+        <button *ngIf="!searchTerm && !selectedDifficulty" class="cta-button" routerLink="/recipes/new">
+          <span>Erstes Rezept erstellen</span>
+          <i class="bi bi-plus-circle"></i>
+        </button>
+        <button *ngIf="searchTerm || selectedDifficulty" class="cta-button" (click)="clearAllFilters()">
+          <span>Filter zurücksetzen</span>
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" *ngIf="showDeleteModal" (click)="cancelDelete()">
+  <div class="delete-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Rezept löschen</h3>
+      <button class="close-btn" (click)="cancelDelete()">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p>Möchtest du das Rezept <strong>"{{ recipeToDelete?.title }}"</strong> wirklich löschen?</p>
+      <p class="warning-text">Diese Aktion kann nicht rückgängig gemacht werden.</p>
+    </div>
+    <div class="modal-actions">
+      <button class="cancel-btn" (click)="cancelDelete()">Abbrechen</button>
+      <button class="delete-btn" (click)="deleteRecipe()">
+        <i class="bi bi-trash"></i>
+        Löschen
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,7 +1,8 @@
 // src/app/services/recipe.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
+import { tap, catchError, map } from 'rxjs/operators';
 import { ApiConstants } from '../utils/api.constants';
 import { 
   Recipe, 
@@ -39,7 +40,21 @@ export class RecipeService {
       ApiConstants.buildUrl(ApiConstants.RECIPES.BASE, filters) : 
       ApiConstants.RECIPES.BASE;
     
-    return this.http.get<RecipeList[]>(url);
+    console.log('🔍 Recipe Service - API Call URL:', url);
+    console.log('🔍 Recipe Service - Filters:', filters);
+    
+    return this.http.get<any>(url).pipe(
+      tap((response: any) => {
+        console.log('🔍 Recipe Service - Full Response:', response);
+        console.log('🔍 Recipe Service - Results Array:', response.results);
+        console.log('🔍 Recipe Service - Count:', response.count);
+      }),
+      map((response: any) => response.results || response),
+      catchError((error: any) => {
+        console.error('❌ Recipe Service - Error:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
   /**
