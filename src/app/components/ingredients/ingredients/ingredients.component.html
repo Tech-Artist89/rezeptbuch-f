@@ -1,1 +1,557 @@
-<p>ingredients works!</p>
+<!-- Ingredients Container -->
+<div class="ingredients-container">
+  <!-- Animated Background -->
+  <div class="ingredients-bg">
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+  </div>
+
+  <!-- Header Section -->
+  <header class="ingredients-header">
+    <div class="header-content">
+      <div class="header-text">
+        <h1 class="page-title">
+          <i class="bi bi-egg-fried"></i>
+          <span class="gradient-text">Zutaten-Bibliothek</span>
+        </h1>
+        <p class="page-subtitle">
+          Verwalte deine Zutatenbibliothek für perfekte Rezepte
+        </p>
+      </div>
+      <button class="create-btn" (click)="openCreateModal()">
+        <span class="btn-content">
+          <i class="bi bi-plus-circle"></i>
+          <span>Neue Zutat</span>
+        </span>
+        <div class="btn-bg"></div>
+      </button>
+    </div>
+  </header>
+
+  <!-- Search and Filter Section -->
+  <section class="search-section">
+    <div class="search-container">
+      <!-- Search Bar -->
+      <div class="search-bar">
+        <div class="search-input-container">
+          <i class="bi bi-search search-icon"></i>
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (input)="onSearch()"
+            placeholder="Zutaten durchsuchen..."
+            class="search-input"
+          />
+          <button *ngIf="searchTerm" (click)="clearSearch()" class="clear-btn">
+            <i class="bi bi-x"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Filter and Sort -->
+      <div class="filter-container">
+        <!-- Unit Filter -->
+        <div class="filter-group">
+          <div class="filter-dropdown">
+            <select [(ngModel)]="selectedUnit" (change)="filterByUnit(selectedUnit)" class="filter-select">
+              <option value="">Alle Einheiten</option>
+              <option *ngFor="let unit of availableUnits" [value]="unit">{{ unit }}</option>
+            </select>
+          </div>
+          
+          <!-- Calories Filter -->
+          <button 
+            [class]="'filter-btn ' + (showCaloriesOnly ? 'active' : '')"
+            (click)="toggleCaloriesFilter()"
+          >
+            <i class="bi bi-lightning"></i>
+            <span>Mit Kalorien</span>
+          </button>
+        </div>
+        
+        <!-- Sort -->
+        <div class="sort-container">
+          <button class="sort-btn" (click)="toggleSortMenu()">
+            <i class="bi bi-sort-down"></i>
+            <span>{{ currentSort.label }}</span>
+            <i class="bi bi-chevron-down"></i>
+          </button>
+          
+          <div class="sort-dropdown" [class.active]="showSortMenu">
+            <button 
+              *ngFor="let sort of sortOptions" 
+              class="sort-option"
+              (click)="selectSort(sort)"
+            >
+              <i [class]="sort.icon"></i>
+              <span>{{ sort.label }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-section">
+    <div class="loading-spinner">
+      <div class="spinner"></div>
+    </div>
+    <p>Zutaten werden geladen...</p>
+  </div>
+
+  <!-- Ingredients Grid -->
+  <section *ngIf="!isLoading" class="ingredients-section">
+    <!-- Results Info -->
+    <div class="results-info" *ngIf="filteredIngredients.length > 0">
+      <span class="results-count">{{ filteredIngredients.length }} Zutat{{ filteredIngredients.length !== 1 ? 'en' : '' }} gefunden</span>
+      <span *ngIf="searchTerm || selectedUnit || showCaloriesOnly" class="clear-filters" (click)="clearAllFilters()">
+        <i class="bi bi-x-circle"></i>
+        Filter zurücksetzen
+      </span>
+    </div>
+
+    <!-- Ingredients Grid -->
+    <div class="ingredients-grid" *ngIf="filteredIngredients.length > 0">
+      <div 
+        *ngFor="let ingredient of filteredIngredients; trackBy: trackByIngredientId" 
+        class="ingredient-card"
+      >
+        <!-- Ingredient Header -->
+        <div class="card-header">
+          <div class="ingredient-icon">
+            <i class="bi bi-egg"></i>
+          </div>
+          <h3 class="ingredient-name">{{ ingredient.name }}</h3>
+          <div class="card-actions">
+            <button class="action-btn edit" (click)="openEditModal(ingredient)">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button class="action-btn delete" (click)="confirmDelete(ingredient)">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Ingredient Content -->
+        <div class="card-content">
+          <div class="ingredient-details">
+            <div class="detail-item unit">
+              <div class="detail-icon">
+                <i class="bi bi-rulers"></i>
+              </div>
+              <div class="detail-content">
+                <span class="detail-label">Einheit</span>
+                <span class="detail-value">{{ ingredient.unit }}</span>
+              </div>
+            </div>
+
+            <div class="detail-item calories" *ngIf="hasCalories(ingredient)">
+              <div class="detail-icon">
+                <i class="bi bi-lightning"></i>
+              </div>
+              <div class="detail-content">
+                <span class="detail-label">Kalorien</span>
+                <span class="detail-value">{{ ingredient.calories_per_100g }} kcal/100g</span>
+              </div>
+            </div>
+
+            <div class="detail-item no-calories" *ngIf="!hasCalories(ingredient)">
+              <div class="detail-icon">
+                <i class="bi bi-dash-circle"></i>
+              </div>
+              <div class="detail-content">
+                <span class="detail-label">Kalorien</span>
+                <span class="detail-value">Nicht angegeben</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="ingredient-meta">
+            <div class="meta-item">
+              <i class="bi bi-calendar"></i>
+              <span>Erstellt {{ formatDate(ingredient.created_at) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredIngredients.length === 0 && !isLoading">
+      <div class="empty-content">
+        <div class="empty-icon">
+          <i class="bi bi-egg-fried"></i>
+        </div>
+        <h3 *ngIf="!searchTerm && !selectedUnit && !showCaloriesOnly">Noch keine Zutaten</h3>
+        <h3 *ngIf="searchTerm || selectedUnit || showCaloriesOnly">Keine Zutaten gefunden</h3>
+        <p *ngIf="!searchTerm && !selectedUnit && !showCaloriesOnly">
+          Du hast noch keine Zutaten erstellt. Erstelle deine erste Zutat und baue deine Bibliothek auf.
+        </p>
+        <p *ngIf="searchTerm || selectedUnit || showCaloriesOnly">
+          Keine Zutaten entsprechen deinen Suchkriterien. Versuche es mit anderen Begriffen oder entferne die Filter.
+        </p>
+        <button *ngIf="!searchTerm && !selectedUnit && !showCaloriesOnly" class="cta-button" (click)="openCreateModal()">
+          <span>Erste Zutat erstellen</span>
+          <i class="bi bi-plus-circle"></i>
+        </button>
+        <button *ngIf="searchTerm || selectedUnit || showCaloriesOnly" class="cta-button" (click)="clearAllFilters()">
+          <span>Filter zurücksetzen</span>
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Create Ingredient Modal -->
+<div class="modal-overlay" *ngIf="showCreateModal" (click)="closeCreateModal()">
+  <div class="ingredient-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Neue Zutat erstellen</h3>
+      <button class="close-btn" (click)="closeCreateModal()">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    
+    <form [formGroup]="ingredientForm" (ngSubmit)="createIngredient()">
+      <div class="modal-body">
+        <!-- Error Message -->
+        <div *ngIf="errorMessage" class="error-alert">
+          <i class="bi bi-exclamation-triangle"></i>
+          <span>{{ errorMessage }}</span>
+        </div>
+
+        <!-- Name Field -->
+        <div class="form-group">
+          <label for="create-name" class="form-label">
+            <i class="bi bi-tag"></i>
+            Name der Zutat
+          </label>
+          <input
+            id="create-name"
+            type="text"
+            formControlName="name"
+            placeholder="z.B. Mehl, Tomaten, Olivenöl..."
+            [class]="'form-input ' + (isFieldInvalid('name') ? 'error' : '')"
+          />
+          <div *ngIf="getFieldError('name')" class="error-message">
+            {{ getFieldError('name') }}
+          </div>
+        </div>
+
+        <!-- Unit Field -->
+        <div class="form-group">
+          <label for="edit-unit" class="form-label">
+            <i class="bi bi-rulers"></i>
+            Einheit
+          </label>
+          <div class="unit-input-container">
+            <input
+              id="edit-unit"
+              type="text"
+              formControlName="unit"
+              placeholder="g, ml, Stück..."
+              [class]="'form-input ' + (isFieldInvalid('unit') ? 'error' : '')"
+            />
+            <div class="common-units">
+              <button 
+                *ngFor="let unit of commonUnits" 
+                type="button"
+                class="unit-btn"
+                (click)="selectUnit(unit)"
+              >
+                {{ unit }}
+              </button>
+            </div>
+          </div>
+          <div *ngIf="getFieldError('unit')" class="error-message">
+            {{ getFieldError('unit') }}
+          </div>
+        </div>
+
+        <!-- Calories Field -->
+        <div class="form-group">
+          <label for="edit-calories" class="form-label">
+            <i class="bi bi-lightning"></i>
+            Kalorien pro 100g <span class="optional">(optional)</span>
+          </label>
+          <input
+            id="edit-calories"
+            type="number"
+            formControlName="calories_per_100g"
+            placeholder="z.B. 350"
+            min="0"
+            max="9999"
+            [class]="'form-input ' + (isFieldInvalid('calories_per_100g') ? 'error' : '')"
+          />
+          <div *ngIf="getFieldError('calories_per_100g')" class="error-message">
+            {{ getFieldError('calories_per_100g') }}
+          </div>
+          <div class="input-hint">
+            <i class="bi bi-info-circle"></i>
+            Kalorienangabe hilft bei der Nährwertberechnung von Rezepten
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="cancel-btn" (click)="closeEditModal()">
+          Abbrechen
+        </button>
+        <button 
+          type="submit" 
+          [disabled]="ingredientForm.invalid || isSaving"
+          class="save-btn"
+        >
+          <div class="btn-content">
+            <i *ngIf="!isSaving" class="bi bi-check-circle"></i>
+            <div *ngIf="isSaving" class="btn-spinner"></div>
+            <span>{{ isSaving ? 'Wird gespeichert...' : 'Änderungen speichern' }}</span>
+          </div>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" *ngIf="showDeleteModal" (click)="cancelDelete()">
+  <div class="delete-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Zutat löschen</h3>
+      <button class="close-btn" (click)="cancelDelete()">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p>Möchtest du die Zutat <strong>"{{ ingredientToDelete?.name }}"</strong> wirklich löschen?</p>
+      <p class="warning-text">Diese Aktion kann nicht rückgängig gemacht werden und könnte Auswirkungen auf bestehende Rezepte haben.</p>
+    </div>
+    <div class="modal-actions">
+      <button class="cancel-btn" (click)="cancelDelete()">Abbrechen</button>
+      <button class="delete-btn" (click)="deleteIngredient()" [disabled]="isDeleting">
+        <span *ngIf="!isDeleting">
+          <i class="bi bi-trash"></i>
+          Löschen
+        </span>
+        <span *ngIf="isDeleting" class="deleting-state">
+          <div class="spinner-small"></div>
+          Wird gelöscht...
+        </span>
+      </button>
+    </div>
+  </div>
+</div> class="error-message">
+            {{ getFieldError('name') }}
+
+        <!-- Unit Field -->
+        <div class="form-group">
+          <label for="create-unit" class="form-label">
+            <i class="bi bi-rulers"></i>
+            Einheit
+          </label>
+          <div class="unit-input-container">
+            <input
+              id="create-unit"
+              type="text"
+              formControlName="unit"
+              placeholder="g, ml, Stück..."
+              [class]="'form-input ' + (isFieldInvalid('unit') ? 'error' : '')"
+            />
+            <div class="common-units">
+              <button 
+                *ngFor="let unit of commonUnits" 
+                type="button"
+                class="unit-btn"
+                (click)="selectUnit(unit)"
+              >
+                {{ unit }}
+              </button>
+            </div>
+          </div>
+          <div *ngIf="getFieldError('unit')" class="error-message">
+            {{ getFieldError('unit') }}
+          </div>
+        </div>
+
+        <!-- Calories Field -->
+        <div class="form-group">
+          <label for="create-calories" class="form-label">
+            <i class="bi bi-lightning"></i>
+            Kalorien pro 100g <span class="optional">(optional)</span>
+          </label>
+          <input
+            id="create-calories"
+            type="number"
+            formControlName="calories_per_100g"
+            placeholder="z.B. 350"
+            min="0"
+            max="9999"
+            [class]="'form-input ' + (isFieldInvalid('calories_per_100g') ? 'error' : '')"
+          />
+          <div *ngIf="getFieldError('calories_per_100g')" class="error-message">
+            {{ getFieldError('calories_per_100g') }}
+          </div>
+          <div class="input-hint">
+            <i class="bi bi-info-circle"></i>
+            Kalorienangabe hilft bei der Nährwertberechnung von Rezepten
+          </div>
+        </div>
+
+      <div class="modal-actions">
+        <button type="button" class="cancel-btn" (click)="closeCreateModal()">
+          Abbrechen
+        </button>
+        <button 
+          type="submit" 
+          [disabled]="ingredientForm.invalid || isSaving"
+          class="save-btn"
+        >
+          <div class="btn-content">
+            <i *ngIf="!isSaving" class="bi bi-plus-circle"></i>
+            <div *ngIf="isSaving" class="btn-spinner"></div>
+            <span>{{ isSaving ? 'Wird erstellt...' : 'Zutat erstellen' }}</span>
+          </div>
+        </button>
+      </div>
+
+<!-- Edit Ingredient Modal -->
+<div class="modal-overlay" *ngIf="showEditModal" (click)="closeEditModal()">
+  <div class="ingredient-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Zutat bearbeiten</h3>
+      <button class="close-btn" (click)="closeEditModal()">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    
+    <form [formGroup]="ingredientForm" (ngSubmit)="updateIngredient()">
+      <div class="modal-body">
+        <!-- Error Message -->
+        <div *ngIf="errorMessage" class="error-alert">
+          <i class="bi bi-exclamation-triangle"></i>
+          <span>{{ errorMessage }}</span>
+        </div>
+
+        <!-- Name Field -->
+        <div class="form-group">
+          <label for="edit-name" class="form-label">
+            <i class="bi bi-tag"></i>
+            Name der Zutat
+          </label>
+          <input
+            id="edit-name"
+            type="text"
+            formControlName="name"
+            placeholder="z.B. Mehl, Tomaten, Olivenöl..."
+            [class]="'form-input ' + (isFieldInvalid('name') ? 'error' : '')"
+          />
+          <div *ngIf="getFieldError('name')" class="error-message">
+            {{ getFieldError('name') }}
+          </div>
+        </div>
+
+        <!-- Unit Field -->
+        <div class="form-group">
+          <label for="edit-unit" class="form-label">
+            <i class="bi bi-rulers"></i>
+            Einheit
+          </label>
+          <div class="unit-input-container">
+            <input
+              id="edit-unit"
+              type="text"
+              formControlName="unit"
+              placeholder="g, ml, Stück..."
+              [class]="'form-input ' + (isFieldInvalid('unit') ? 'error' : '')"
+            />
+            <div class="common-units">
+              <button 
+                *ngFor="let unit of commonUnits" 
+                type="button"
+                class="unit-btn"
+                (click)="selectUnit(unit)"
+              >
+                {{ unit }}
+              </button>
+            </div>
+          </div>
+          <div *ngIf="getFieldError('unit')" class="error-message">
+            {{ getFieldError('unit') }}
+          </div>
+        </div>
+
+        <!-- Calories Field -->
+        <div class="form-group">
+          <label for="edit-calories" class="form-label">
+            <i class="bi bi-lightning"></i>
+            Kalorien pro 100g <span class="optional">(optional)</span>
+          </label>
+          <input
+            id="edit-calories"
+            type="number"
+            formControlName="calories_per_100g"
+            placeholder="z.B. 350"
+            min="0"
+            max="9999"
+            [class]="'form-input ' + (isFieldInvalid('calories_per_100g') ? 'error' : '')"
+          />
+          <div *ngIf="getFieldError('calories_per_100g')" class="error-message">
+            {{ getFieldError('calories_per_100g') }}
+          </div>
+          <div class="input-hint">
+            <i class="bi bi-info-circle"></i>
+            Kalorienangabe hilft bei der Nährwertberechnung von Rezepten
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="cancel-btn" (click)="closeEditModal()">
+          Abbrechen
+        </button>
+        <button 
+          type="submit" 
+          [disabled]="ingredientForm.invalid || isSaving"
+          class="save-btn"
+        >
+          <div class="btn-content">
+            <i *ngIf="!isSaving" class="bi bi-check-circle"></i>
+            <div *ngIf="isSaving" class="btn-spinner"></div>
+            <span>{{ isSaving ? 'Wird gespeichert...' : 'Änderungen speichern' }}</span>
+          </div>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" *ngIf="showDeleteModal" (click)="cancelDelete()">
+  <div class="delete-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Zutat löschen</h3>
+      <button class="close-btn" (click)="cancelDelete()">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p>Möchtest du die Zutat <strong>"{{ ingredientToDelete?.name }}"</strong> wirklich löschen?</p>
+      <p class="warning-text">Diese Aktion kann nicht rückgängig gemacht werden und könnte Auswirkungen auf bestehende Rezepte haben.</p>
+    </div>
+    <div class="modal-actions">
+      <button class="cancel-btn" (click)="cancelDelete()">Abbrechen</button>
+      <button class="delete-btn" (click)="deleteIngredient()" [disabled]="isDeleting">
+        <span *ngIf="!isDeleting">
+          <i class="bi bi-trash"></i>
+          Löschen
+        </span>
+        <span *ngIf="isDeleting" class="deleting-state">
+          <div class="spinner-small"></div>
+          Wird gelöscht...
+        </span>
+      </button>
+    </div>
+  </div>
+</div>

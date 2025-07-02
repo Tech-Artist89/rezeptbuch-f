@@ -1,1 +1,433 @@
-<p>recipes-form works!</p>
+<!-- Recipe Form Container -->
+<div class="recipe-form-container">
+  <!-- Animated Background -->
+  <div class="form-bg">
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+  </div>
+
+  <!-- Header Section -->
+  <header class="form-header">
+    <div class="header-content">
+      <div class="header-text">
+        <h1 class="page-title">
+          <i class="bi bi-journal-plus"></i>
+          <span class="gradient-text">{{ isEditMode ? 'Rezept bearbeiten' : 'Neues Rezept' }}</span>
+        </h1>
+        <p class="page-subtitle">
+          {{ isEditMode ? 'Aktualisiere dein Rezept' : 'Erstelle ein neues kulinarisches Meisterwerk' }}
+        </p>
+      </div>
+      <button class="cancel-btn" (click)="onCancel()">
+        <i class="bi bi-x-circle"></i>
+        <span>Abbrechen</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoadingData" class="loading-section">
+    <div class="loading-spinner">
+      <div class="spinner"></div>
+    </div>
+    <p>{{ isEditMode ? 'Rezept wird geladen...' : 'Formulardaten werden geladen...' }}</p>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="error-alert">
+    <i class="bi bi-exclamation-triangle"></i>
+    <span>{{ errorMessage }}</span>
+    <button (click)="errorMessage = ''" class="close-error">
+      <i class="bi bi-x"></i>
+    </button>
+  </div>
+
+  <!-- Recipe Form -->
+  <div *ngIf="!isLoadingData" class="form-section">
+    <form [formGroup]="recipeForm" (ngSubmit)="onSubmit()" class="recipe-form">
+      
+      <!-- Basic Information Card -->
+      <div class="form-card">
+        <div class="card-header">
+          <i class="bi bi-info-circle"></i>
+          <h2>Grundinformationen</h2>
+        </div>
+        
+        <div class="card-content">
+          <!-- Title -->
+          <div class="form-group">
+            <label for="title" class="form-label">
+              <i class="bi bi-pencil"></i>
+              Titel des Rezepts
+            </label>
+            <input
+              id="title"
+              type="text"
+              formControlName="title"
+              placeholder="z.B. Spaghetti Carbonara"
+              [class]="'form-input ' + (isFieldInvalid('title') ? 'error' : '')"
+            />
+            <div *ngIf="getFieldError('title')" class="error-message">
+              {{ getFieldError('title') }}
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="form-group">
+            <label for="description" class="form-label">
+              <i class="bi bi-card-text"></i>
+              Beschreibung
+            </label>
+            <textarea
+              id="description"
+              formControlName="description"
+              placeholder="Beschreibe dein Rezept in wenigen Sätzen..."
+              rows="3"
+              [class]="'form-input ' + (isFieldInvalid('description') ? 'error' : '')"
+            ></textarea>
+            <div *ngIf="getFieldError('description')" class="error-message">
+              {{ getFieldError('description') }}
+            </div>
+          </div>
+
+          <!-- Time and Servings Row -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="prep_time" class="form-label">
+                <i class="bi bi-clock"></i>
+                Vorbereitungszeit (Min)
+              </label>
+              <input
+                id="prep_time"
+                type="number"
+                formControlName="prep_time"
+                min="1"
+                max="600"
+                [class]="'form-input ' + (isFieldInvalid('prep_time') ? 'error' : '')"
+              />
+              <div *ngIf="getFieldError('prep_time')" class="error-message">
+                {{ getFieldError('prep_time') }}
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="cook_time" class="form-label">
+                <i class="bi bi-fire"></i>
+                Kochzeit (Min)
+              </label>
+              <input
+                id="cook_time"
+                type="number"
+                formControlName="cook_time"
+                min="0"
+                max="600"
+                [class]="'form-input ' + (isFieldInvalid('cook_time') ? 'error' : '')"
+              />
+              <div *ngIf="getFieldError('cook_time')" class="error-message">
+                {{ getFieldError('cook_time') }}
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="servings" class="form-label">
+                <i class="bi bi-people"></i>
+                Portionen
+              </label>
+              <input
+                id="servings"
+                type="number"
+                formControlName="servings"
+                min="1"
+                max="20"
+                [class]="'form-input ' + (isFieldInvalid('servings') ? 'error' : '')"
+              />
+              <div *ngIf="getFieldError('servings')" class="error-message">
+                {{ getFieldError('servings') }}
+              </div>
+            </div>
+
+            <!-- Total Time Display -->
+            <div class="total-time-display">
+              <div class="time-icon">
+                <i class="bi bi-stopwatch"></i>
+              </div>
+              <div class="time-info">
+                <span class="time-label">Gesamtzeit</span>
+                <span class="time-value">{{ totalTime }} Min</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Difficulty and Categories Card -->
+      <div class="form-card">
+        <div class="card-header">
+          <i class="bi bi-stars"></i>
+          <h2>Schwierigkeit & Kategorien</h2>
+        </div>
+        
+        <div class="card-content">
+          <!-- Difficulty Selection -->
+          <div class="form-group">
+            <label class="form-label">
+              <i class="bi bi-bar-chart"></i>
+              Schwierigkeitsgrad
+            </label>
+            <div class="difficulty-options">
+              <div 
+                *ngFor="let option of difficultyOptions" 
+                [class]="'difficulty-option ' + (recipeForm.get('difficulty')?.value === option.value ? 'selected' : '')"
+                (click)="recipeForm.patchValue({difficulty: option.value})"
+              >
+                <div class="option-icon">
+                  <i [class]="option.icon"></i>
+                </div>
+                <div class="option-content">
+                  <span class="option-label">{{ option.label }}</span>
+                  <span class="option-description">{{ option.description }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Categories -->
+          <div class="form-group" *ngIf="categories && categories.length > 0">
+            <label class="form-label">
+              <i class="bi bi-tags"></i>
+              Kategorien
+            </label>
+            <div class="categories-grid">
+              <div 
+                *ngFor="let category of categories; trackBy: trackByCategoryId" 
+                [class]="'category-option ' + (isCategorySelected(category.id) ? 'selected' : '')"
+                (click)="onCategoryChange(category.id, !isCategorySelected(category.id))"
+              >
+                <div class="category-checkbox">
+                  <i [class]="isCategorySelected(category.id) ? 'bi bi-check-circle-fill' : 'bi bi-circle'"></i>
+                </div>
+                <span class="category-name">{{ category.name }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Public Toggle -->
+          <div class="form-group">
+            <div class="toggle-option">
+              <div class="toggle-content">
+                <div class="toggle-icon">
+                  <i class="bi bi-globe"></i>
+                </div>
+                <div class="toggle-text">
+                  <span class="toggle-label">Öffentlich teilen</span>
+                  <span class="toggle-description">Andere Benutzer können dein Rezept sehen</span>
+                </div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" formControlName="is_public">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Image Upload Card -->
+      <div class="form-card">
+        <div class="card-header">
+          <i class="bi bi-image"></i>
+          <h2>Rezeptbild</h2>
+        </div>
+        
+        <div class="card-content">
+          <div class="image-upload-section">
+            <!-- Image Preview -->
+            <div class="image-preview" *ngIf="previewUrl">
+              <img [src]="previewUrl" alt="Rezept Vorschau" />
+              <button type="button" class="remove-image-btn" (click)="removeImage()">
+                <i class="bi bi-x-circle"></i>
+              </button>
+            </div>
+
+            <!-- Upload Area -->
+            <div class="upload-area" *ngIf="!previewUrl">
+              <div class="upload-icon">
+                <i class="bi bi-cloud-upload"></i>
+              </div>
+              <h3>Bild hochladen</h3>
+              <p>Ziehe ein Bild hierher oder klicke zum Auswählen</p>
+              <p class="upload-info">Unterstützte Formate: JPG, PNG, GIF (max. 5MB)</p>
+            </div>
+
+            <!-- File Input -->
+            <input
+              type="file"
+              id="imageInput"
+              accept="image/*"
+              (change)="onImageSelected($event)"
+              class="file-input"
+            />
+            
+            <!-- Upload Button -->
+            <button type="button" class="upload-btn" onclick="document.getElementById('imageInput').click()">
+              <i class="bi bi-plus-circle"></i>
+              <span>{{ previewUrl ? 'Bild ändern' : 'Bild auswählen' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Instructions Card -->
+      <div class="form-card">
+        <div class="card-header">
+          <i class="bi bi-list-ol"></i>
+          <h2>Zubereitungsanleitung</h2>
+        </div>
+        
+        <div class="card-content">
+          <div class="form-group">
+            <label for="instructions" class="form-label">
+              <i class="bi bi-card-text"></i>
+              Schritt-für-Schritt Anleitung
+            </label>
+            <textarea
+              id="instructions"
+              formControlName="instructions"
+              placeholder="1. Wasser zum Kochen bringen...&#10;2. Nudeln hinzufügen...&#10;3. ..."
+              rows="8"
+              [class]="'form-input instructions-input ' + (isFieldInvalid('instructions') ? 'error' : '')"
+            ></textarea>
+            <div *ngIf="getFieldError('instructions')" class="error-message">
+              {{ getFieldError('instructions') }}
+            </div>
+            <div class="input-hint">
+              <i class="bi bi-lightbulb"></i>
+              Nummeriere deine Schritte für bessere Übersichtlichkeit
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ingredients Card -->
+      <div class="form-card">
+        <div class="card-header">
+          <i class="bi bi-egg-fried"></i>
+          <h2>Zutaten</h2>
+          <button type="button" class="add-ingredient-btn" (click)="addRecipeIngredient()">
+            <i class="bi bi-plus-circle"></i>
+            <span>Zutat hinzufügen</span>
+          </button>
+        </div>
+        
+        <div class="card-content">
+          <div class="ingredients-section" formArrayName="recipe_ingredients">
+            
+            <!-- Existing Ingredients -->
+            <div 
+              *ngFor="let ingredient of recipeIngredients.controls; let i = index; trackBy: trackByIndex" 
+              [formGroupName]="i" 
+              class="ingredient-item"
+            >
+              <div class="ingredient-row">
+                <div class="ingredient-select">
+                  <label [for]="'ingredient_' + i" class="form-label">Zutat</label>
+                  <select 
+                  [id]="'ingredient_' + i"
+                  formControlName="ingredient_id" 
+                  class="form-input"
+                >
+                  <option value="">Zutat auswählen...</option>
+                  <option 
+                    *ngFor="let ing of (ingredients && ingredients.length > 0 ? ingredients : []); trackBy: trackByIngredientId" 
+                    [value]="ing.id"
+                  >
+                    {{ ing.name }}
+                  </option>
+                </select>
+                </div>
+
+                <div class="ingredient-amount">
+                  <label [for]="'amount_' + i" class="form-label">Menge</label>
+                  <input
+                    [id]="'amount_' + i"
+                    type="number"
+                    formControlName="amount"
+                    min="0.01"
+                    step="0.1"
+                    class="form-input"
+                    placeholder="1"
+                  />
+                </div>
+
+                <div class="ingredient-unit">
+                  <label [for]="'unit_' + i" class="form-label">Einheit</label>
+                  <input
+                    [id]="'unit_' + i"
+                    type="text"
+                    formControlName="unit"
+                    class="form-input"
+                    placeholder="g, ml, Stück..."
+                  />
+                </div>
+
+                <div class="ingredient-notes">
+                  <label [for]="'notes_' + i" class="form-label">Notizen</label>
+                  <input
+                    [id]="'notes_' + i"
+                    type="text"
+                    formControlName="notes"
+                    class="form-input"
+                    placeholder="optional..."
+                  />
+                </div>
+
+                <div class="ingredient-actions">
+                  <button 
+                    type="button" 
+                    class="remove-ingredient-btn" 
+                    (click)="removeRecipeIngredient(i)"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div *ngIf="recipeIngredients.length === 0" class="ingredients-empty">
+              <div class="empty-icon">
+                <i class="bi bi-egg"></i>
+              </div>
+              <h3>Keine Zutaten hinzugefügt</h3>
+              <p>Füge Zutaten zu deinem Rezept hinzu</p>
+              <button type="button" class="add-first-ingredient-btn" (click)="addRecipeIngredient()">
+                <i class="bi bi-plus-circle"></i>
+                <span>Erste Zutat hinzufügen</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <button type="button" class="cancel-action-btn" (click)="onCancel()">
+          <i class="bi bi-x-circle"></i>
+          <span>Abbrechen</span>
+        </button>
+        
+        <button 
+          type="submit" 
+          [disabled]="recipeForm.invalid || isSaving"
+          class="save-btn"
+        >
+          <div class="btn-content">
+            <i *ngIf="!isSaving" [class]="isEditMode ? 'bi bi-check-circle' : 'bi bi-plus-circle'"></i>
+            <div *ngIf="isSaving" class="btn-spinner"></div>
+            <span>{{ isSaving ? 'Wird gespeichert...' : (isEditMode ? 'Änderungen speichern' : 'Rezept erstellen') }}</span>
+          </div>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

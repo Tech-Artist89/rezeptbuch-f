@@ -6,8 +6,13 @@ export type DifficultyLevel = 'easy' | 'medium' | 'hard';
 
 export interface RecipeIngredient {
   id: number;
-  ingredient: Ingredient;
-  ingredient_id: number;
+  ingredient: {
+    id: number;
+    name: string;
+    unit: string;
+    calories_per_100g?: number;
+    created_at: string;
+  };
   amount: number;
   unit: string;
   notes: string;
@@ -24,9 +29,8 @@ export interface Recipe {
   servings: number;
   difficulty: DifficultyLevel;
   author: string;
-  categories: Category[];
-  category_ids: number[];
-  recipe_ingredients: RecipeIngredient[];
+  categories: Category[]; // Array von Category-Objekten, nicht nur IDs
+  recipe_ingredients: RecipeIngredient[]; // Array mit nested ingredient objects
   image?: string;
   is_public: boolean;
   created_at: string;
