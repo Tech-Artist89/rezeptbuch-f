@@ -1,1 +1,381 @@
-<p>planner works!</p>
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-5">
+    <div>
+      <h1 class="h2 mb-2 text-light fw-bold">Wochenplaner</h1>
+      <p class="text-muted mb-0">Plane deine Mahlzeiten für die ganze Woche</p>
+    </div>
+    
+    <div class="d-flex align-items-center gap-3">
+      <button class="create-btn" routerLink="/dashboard">
+        <span class="btn-content">
+          <i class="bi bi-arrow-left"></i>
+          <span>Zurück</span>
+        </span>
+        <div class="btn-bg"></div>
+      </button>
+      <div class="d-flex align-items-center bg-dark-card rounded-3 p-1">
+        <button class="btn btn-sm nav-btn" (click)="previousMonth()" aria-label="Vorheriger Monat">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        
+        <span class="px-3 py-2 text-light fw-semibold">{{ formatMonthYear(currentMonth) }}</span>
+        
+        <button class="btn btn-sm nav-btn" (click)="nextMonth()" aria-label="Nächster Monat">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
+      
+      <button class="btn btn-primary rounded-3 px-4" (click)="goToToday()">
+        <i class="bi bi-calendar-today me-2"></i>Heute
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="text-center py-5" *ngIf="isLoading">
+    <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="text-muted fs-5">Lade Essensplan...</p>
+  </div>
+
+  <!-- Calendar -->
+  <div class="calendar-container" *ngIf="!isLoading">
+    <!-- Weekday Headers -->
+    <div class="weekdays-header bg-dark-surface rounded-top-3 border-bottom border-dark">
+      <div class="row g-0">
+        <div class="col text-center py-4 border-end border-dark" *ngFor="let day of weekDays; let last = last" [class.border-end-0]="last">
+          <span class="fw-bold text-secondary fs-6 d-none d-md-block">{{ day.name }}</span>
+          <span class="fw-bold text-secondary fs-6 d-md-none">{{ day.short }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Calendar Grid -->
+    <div class="calendar-grid bg-dark-card rounded-bottom-3">
+      <div class="row g-0">
+        <div 
+          class="col-12 col-md calendar-day p-3 border-end border-bottom border-dark position-relative" 
+          *ngFor="let day of calendarDays; let i = index"
+          [class.other-month]="!day.isCurrentMonth"
+          [class.today]="day.isToday"
+          [class.weekend]="day.isWeekend"
+          [class.border-end-0]="(i + 1) % 7 === 0"
+          [class.border-bottom-0]="i >= calendarDays.length - 7"
+        >
+          <!-- Day Number -->
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="day-number-container">
+              <span class="day-number" [class.today-number]="day.isToday">
+                {{ day.date.getDate() }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Meal Plans -->
+          <div class="meals-container d-flex flex-column gap-2">
+            <!-- Lunch -->
+            <div class="meal-slot">
+              <div class="meal-label d-flex align-items-center mb-2">
+                <i class="bi bi-sun me-2 text-warning"></i>
+                <small class="text-muted fw-bold">MITTAG</small>
+              </div>
+              
+              <div 
+                class="meal-plan lunch-plan glass-card p-3 rounded-3 position-relative" 
+                *ngIf="day.lunchPlan; else lunchEmpty"
+                (click)="editMealPlan(day.lunchPlan!, $event)"
+              >
+                <h6 class="meal-title mb-2 text-light fw-semibold">{{ day.lunchPlan.recipe.title }}</h6>
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary bg-opacity-25 text-primary">{{ day.lunchPlan.servings }}P</span>
+                    <span class="badge bg-secondary bg-opacity-25 text-secondary">{{ day.lunchPlan.recipe.total_time }}min</span>
+                  </div>
+                </div>
+                <button 
+                  class="btn btn-danger btn-sm delete-meal-btn position-absolute rounded-circle"
+                  (click)="deleteMealPlan(day.lunchPlan!, $event)"
+                  aria-label="Mahlzeit löschen"
+                >
+                  <i class="bi bi-x"></i>
+                </button>
+              </div>
+              
+              <ng-template #lunchEmpty>
+                <button 
+                  class="btn btn-outline-primary w-100 add-meal-btn rounded-3 py-3"
+                  (click)="openAddMealModal(day.date, 'lunch')"
+                  [disabled]="!day.isCurrentMonth"
+                >
+                  <i class="bi bi-plus-circle me-2"></i>
+                  <span class="d-none d-lg-inline">Mittag hinzufügen</span>
+                  <span class="d-lg-none">Mittag</span>
+                </button>
+              </ng-template>
+            </div>
+
+            <!-- Dinner -->
+            <div class="meal-slot">
+              <div class="meal-label d-flex align-items-center mb-2">
+                <i class="bi bi-moon-stars me-2 text-info"></i>
+                <small class="text-muted fw-bold">ABEND</small>
+              </div>
+              
+              <div 
+                class="meal-plan dinner-plan glass-card p-3 rounded-3 position-relative" 
+                *ngIf="day.dinnerPlan; else dinnerEmpty"
+                (click)="editMealPlan(day.dinnerPlan!, $event)"
+              >
+                <h6 class="meal-title mb-2 text-light fw-semibold">{{ day.dinnerPlan.recipe.title }}</h6>
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-warning bg-opacity-25 text-warning">{{ day.dinnerPlan.servings }}P</span>
+                    <span class="badge bg-secondary bg-opacity-25 text-secondary">{{ day.dinnerPlan.recipe.total_time }}min</span>
+                  </div>
+                </div>
+                <button 
+                  class="btn btn-danger btn-sm delete-meal-btn position-absolute rounded-circle"
+                  (click)="deleteMealPlan(day.dinnerPlan!, $event)"
+                  aria-label="Mahlzeit löschen"
+                >
+                  <i class="bi bi-x"></i>
+                </button>
+              </div>
+              
+              <ng-template #dinnerEmpty>
+                <button 
+                  class="btn btn-outline-warning w-100 add-meal-btn rounded-3 py-3"
+                  (click)="openAddMealModal(day.date, 'dinner')"
+                  [disabled]="!day.isCurrentMonth"
+                >
+                  <i class="bi bi-plus-circle me-2"></i>
+                  <span class="d-none d-lg-inline">Abend hinzufügen</span>
+                  <span class="d-lg-none">Abend</span>
+                </button>
+              </ng-template>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Meal Modal -->
+  <div class="modal fade show d-block" *ngIf="showAddMealModal" style="background: rgba(3, 7, 18, 0.8); backdrop-filter: blur(10px);" (click)="closeAddMealModal()">
+    <div class="modal-dialog modal-lg modal-dialog-centered" (click)="$event.stopPropagation()">
+      <div class="modal-content bg-dark-surface border-0 rounded-4 shadow-lg">
+        <div class="modal-header border-bottom border-dark py-4">
+          <div class="d-flex align-items-center">
+            <div class="icon-container me-3">
+              <i class="bi" [class.bi-plus-circle]="!isEditMode" [class.bi-pencil-square]="isEditMode" class="text-primary fs-3"></i>
+            </div>
+            <div>
+              <h5 class="modal-title text-light mb-1 fw-bold">
+                {{ isEditMode ? 'Bearbeiten:' : 'Hinzufügen:' }} {{ getMealTypeDisplay(selectedMealType) }}
+              </h5>
+              <p class="text-muted mb-0 small">{{ isEditMode ? 'Ändern Sie die Details Ihrer Mahlzeit' : 'Wähle ein Rezept für deine Mahlzeit' }}</p>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white opacity-75" (click)="closeAddMealModal()"></button>
+        </div>
+
+        <div class="modal-body py-4">
+          <div class="mb-4">
+            <label class="form-label text-secondary fw-semibold mb-2">Datum</label>
+            <div class="date-display-card p-3 bg-dark-card rounded-3 border border-dark">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-calendar3 text-primary me-3 fs-5"></i>
+                <div>
+                  <div class="text-light fw-semibold">{{ selectedDate ? formatDateDisplay(selectedDate) : '' }}</div>
+                  <small class="text-muted">{{ selectedMealType === 'lunch' ? 'Mittagessen' : 'Abendessen' }}</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label text-secondary fw-semibold mb-2">Rezept auswählen</label>
+            <button 
+              class="btn w-100 text-start recipe-selector-btn rounded-3 p-4"
+              [class.btn-outline-secondary]="!selectedRecipe"
+              [class.btn-primary]="selectedRecipe"
+              (click)="openRecipeSelector()"
+            >
+              <div *ngIf="!selectedRecipe" class="d-flex align-items-center text-muted">
+                <i class="bi bi-search me-3 fs-5"></i>
+                <div>
+                  <div class="fw-semibold">Rezept auswählen...</div>
+                  <small>Durchsuche deine Rezeptsammlung</small>
+                </div>
+              </div>
+              <div *ngIf="selectedRecipe" class="d-flex align-items-center">
+                <i class="bi bi-check-circle text-success me-3 fs-4"></i>
+                <div class="flex-grow-1">
+                  <div class="fw-bold text-light">{{ selectedRecipe.title }}</div>
+                  <div class="d-flex align-items-center gap-3 mt-1">
+                    <small class="text-muted">
+                      <i class="bi bi-clock me-1"></i>{{ selectedRecipe.total_time }}min
+                    </small>
+                    <small class="text-muted">
+                      <i class="bi bi-bar-chart me-1"></i>{{ getDifficultyDisplay(selectedRecipe.difficulty) }}
+                    </small>
+                  </div>
+                </div>
+              </div>
+            </button>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-4">
+              <label for="servings" class="form-label text-secondary fw-semibold mb-2">Portionen</label>
+              <div class="input-group">
+                <span class="input-group-text bg-dark-card border-dark text-muted">
+                  <i class="bi bi-people"></i>
+                </span>
+                <input 
+                  type="number" 
+                  id="servings"
+                  [(ngModel)]="servings"
+                  min="1"
+                  max="20"
+                  class="form-control bg-dark-card border-dark text-light rounded-end-3"
+                >
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="notes" class="form-label text-secondary fw-semibold mb-2">Notizen (optional)</label>
+            <textarea 
+              id="notes"
+              [(ngModel)]="notes"
+              placeholder="z.B. Besondere Zutaten, Anmerkungen, Variationen..."
+              class="form-control bg-dark-card border-dark text-light rounded-3"
+              rows="3"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer border-top border-dark py-4">
+          <button type="button" class="btn btn-secondary rounded-3 px-4" (click)="closeAddMealModal()">
+            Abbrechen
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-primary rounded-3 px-4" 
+            (click)="saveMealPlan()"
+            [disabled]="!selectedRecipe"
+          >
+            <i class="bi" [class.bi-check-lg]="!isEditMode" [class.bi-save]="isEditMode" class="me-2"></i>
+            {{ isEditMode ? 'Aktualisieren' : 'Speichern' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recipe Selector Modal -->
+  <div class="modal fade show d-block" *ngIf="showRecipeSelector" style="background: rgba(3, 7, 18, 0.8); backdrop-filter: blur(10px);" (click)="closeRecipeSelector()">
+    <div class="modal-dialog modal-xl modal-dialog-centered" (click)="$event.stopPropagation()">
+      <div class="modal-content bg-dark-surface border-0 rounded-4 shadow-lg">
+        <div class="modal-header border-bottom border-dark py-4">
+          <div class="d-flex align-items-center">
+            <div class="icon-container me-3">
+              <i class="bi bi-book text-primary fs-3"></i>
+            </div>
+            <div>
+              <h5 class="modal-title text-light mb-1 fw-bold">Rezept auswählen</h5>
+              <p class="text-muted mb-0 small">Wähle aus deiner Rezeptsammlung</p>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white opacity-75" (click)="closeRecipeSelector()"></button>
+        </div>
+
+        <div class="modal-body py-4">
+          <!-- Search -->
+          <div class="mb-4">
+            <div class="input-group input-group-lg">
+              <span class="input-group-text bg-dark-card border-dark">
+                <i class="bi bi-search text-muted"></i>
+              </span>
+              <input 
+                type="text"
+                [(ngModel)]="recipeSearchTerm"
+                (input)="filterRecipes()"
+                placeholder="Rezepte durchsuchen..."
+                class="form-control bg-dark-card border-dark text-light rounded-end-3"
+              >
+            </div>
+          </div>
+
+          <!-- Recipe List -->
+          <div class="recipe-list" style="max-height: 500px; overflow-y: auto;">
+            <div class="row g-4">
+              <div 
+                class="col-md-6 col-lg-4"
+                *ngFor="let recipe of filteredRecipes"
+              >
+                <div class="recipe-card glass-card h-100 rounded-4 overflow-hidden position-relative" (click)="selectRecipe(recipe)">
+                  <div class="recipe-image-container position-relative">
+                    <img 
+                      *ngIf="recipe.image; else noImage"
+                      [src]="recipe.image" 
+                      [alt]="recipe.title"
+                      class="recipe-image w-100"
+                    >
+                    <ng-template #noImage>
+                      <div class="recipe-image w-100 d-flex align-items-center justify-content-center bg-dark text-muted">
+                        <i class="bi bi-image fs-1"></i>
+                      </div>
+                    </ng-template>
+                    <div class="recipe-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
+                      <i class="bi bi-check-circle-fill text-success fs-1 opacity-0"></i>
+                    </div>
+                  </div>
+                  
+                  <div class="p-4">
+                    <h6 class="recipe-title text-light fw-bold mb-2">{{ recipe.title }}</h6>
+                    <p class="recipe-description text-muted small mb-3 lh-sm">{{ recipe.description | slice:0:80 }}...</p>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                      <span class="badge bg-secondary bg-opacity-25 text-secondary">
+                        {{ getDifficultyDisplay(recipe.difficulty) }}
+                      </span>
+                      <div class="d-flex align-items-center text-muted">
+                        <i class="bi bi-clock me-1"></i>
+                        <small>{{ recipe.total_time }} min</small>
+                      </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                      <small class="text-muted">
+                        <i class="bi bi-people me-1"></i>{{ recipe.servings }} Portionen
+                      </small>
+                      <div class="d-flex gap-1" *ngIf="recipe.categories.length > 0">
+                        <span 
+                          class="badge bg-primary bg-opacity-25 text-primary badge-sm"
+                          *ngFor="let category of recipe.categories | slice:0:2"
+                        >
+                          {{ category.name }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div class="text-center py-5" *ngIf="filteredRecipes.length === 0">
+              <i class="bi bi-search fs-1 text-muted mb-3 d-block opacity-50"></i>
+              <h5 class="text-muted">Keine Rezepte gefunden</h5>
+              <p class="text-muted" *ngIf="recipeSearchTerm">Versuchen Sie einen anderen Suchbegriff.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
