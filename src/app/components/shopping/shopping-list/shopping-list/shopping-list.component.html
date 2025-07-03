@@ -1,1 +1,433 @@
-<p>shopping-list works!</p>
+<div class="shopping-list-container">
+  <!-- Animated Background -->
+  <div class="animated-background">
+    <div class="floating-shapes">
+      <div class="shape shape-1"></div>
+      <div class="shape shape-2"></div>
+      <div class="shape shape-3"></div>
+      <div class="shape shape-4"></div>
+      <div class="shape shape-5"></div>
+      <div class="shape shape-6"></div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="shopping-list-content">
+    <!-- Header Section -->
+    <div class="shopping-list-header">
+      <div class="header-content">
+        <div class="title-section">
+          <h1 class="shopping-list-title">
+            <i class="bi bi-cart"></i>
+            Einkaufslisten
+          </h1>
+          <p class="shopping-list-subtitle">Verwalten Sie Ihre Einkaufslisten und Artikel</p>
+        </div>
+        
+        <div class="header-actions">
+          <button class="btn btn-secondary weekly-btn" (click)="createWeeklyShoppingList()">
+            <i class="bi bi-calendar-week"></i>
+            Wöchentliche Liste
+          </button>
+          <button class="btn btn-primary add-btn" (click)="openCreateModal()">
+            <i class="bi bi-plus-circle"></i>
+            Neue Liste
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filters-section">
+      <!-- Search Bar -->
+      <div class="search-bar">
+        <div class="search-input-wrapper">
+          <i class="bi bi-search search-icon"></i>
+          <input 
+            type="text" 
+            class="search-input" 
+            placeholder="Einkaufslisten durchsuchen..."
+            [value]="searchTerm"
+            (input)="onSearchChange($event)"
+          >
+          <button 
+            class="clear-search-btn"
+            *ngIf="searchTerm"
+            (click)="clearSearch()"
+          >
+            <i class="bi bi-x-circle"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Filter Controls -->
+      <div class="filter-controls">
+        <!-- Status Filter -->
+        <div class="filter-group">
+          <label>Status:</label>
+          <div class="status-buttons">
+            <button 
+              *ngFor="let option of statusOptions"
+              class="status-btn"
+              [class.active]="selectedStatus === option.value"
+              (click)="onStatusChange(option.value)"
+            >
+              <i [class]="option.icon"></i>
+              {{ option.label }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Sort Dropdown -->
+        <div class="sort-dropdown" [class.open]="showSortMenu">
+          <button class="sort-btn" (click)="toggleSortMenu()">
+            <i [class]="currentSort.icon"></i>
+            {{ currentSort.label }}
+            <i class="bi bi-chevron-down"></i>
+          </button>
+          <div class="sort-menu" *ngIf="showSortMenu">
+            <button 
+              *ngFor="let option of sortOptions"
+              class="sort-option"
+              [class.active]="currentSort.value === option.value"
+              (click)="selectSort(option)"
+            >
+              <i [class]="option.icon"></i>
+              {{ option.label }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistics Section -->
+    <div class="stats-section">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="bi bi-list-ul"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">{{ (shoppingLists || []).length }}</div>
+            <div class="stat-label">Listen</div>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="bi bi-play-circle"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">{{ getActiveListsCount() }}</div>
+            <div class="stat-label">Aktiv</div>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="bi bi-check-circle"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">{{ getCompletedListsCount() }}</div>
+            <div class="stat-label">Abgeschlossen</div>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="bi bi-search"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">{{ (filteredShoppingLists || []).length }}</div>
+            <div class="stat-label">Gefiltert</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Shopping Lists Grid -->
+    <div class="shopping-lists-grid" *ngIf="!isLoading">
+      <div 
+        class="shopping-list-card" 
+        *ngFor="let shoppingList of filteredShoppingLists; trackBy: trackByShoppingList"
+        [class.completed]="shoppingList.is_completed"
+      >
+        <!-- Card Header -->
+        <div class="card-header">
+          <div class="list-info">
+            <h3 class="list-name">{{ shoppingList?.name || '' }}</h3>
+            <div class="list-meta">
+              <span class="date-range">
+                <i class="bi bi-calendar"></i>
+                {{ formatDate(shoppingList?.start_date || '') }} - {{ formatDate(shoppingList?.end_date || '') }}
+              </span>
+            </div>
+          </div>
+          
+          <div class="list-status">
+            <button 
+              class="status-toggle"
+              [class.completed]="shoppingList.is_completed"
+              (click)="toggleShoppingListStatus(shoppingList)"
+              [title]="shoppingList.is_completed ? 'Als aktiv markieren' : 'Als abgeschlossen markieren'"
+            >
+              <i [class]="getStatusIcon(shoppingList.is_completed)"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Progress Section -->
+        <div class="progress-section" *ngIf="(shoppingList?.total_items || 0) > 0">
+          <div class="progress-info">
+            <span class="progress-text">
+              {{ shoppingList?.purchased_items || 0 }} von {{ shoppingList?.total_items || 0 }} Artikeln
+            </span>
+            <span class="progress-percentage">
+              {{ getProgressPercentage(shoppingList) }}%
+            </span>
+          </div>
+          <div class="progress-bar">
+            <div 
+              class="progress-fill"
+              [style.width.%]="getProgressPercentage(shoppingList)"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Empty State for Items -->
+        <div class="empty-items" *ngIf="(shoppingList?.total_items || 0) === 0">
+          <i class="bi bi-cart-x"></i>
+          <span>Keine Artikel</span>
+        </div>
+
+        <!-- Card Actions -->
+        <div class="card-actions">
+          <button 
+            class="action-btn view-btn"
+            (click)="openItemsModal(shoppingList)"
+            title="Artikel anzeigen"
+          >
+            <i class="bi bi-eye"></i>
+            Artikel ({{ shoppingList?.total_items || 0 }})
+          </button>
+          
+          <button 
+            class="action-btn generate-btn"
+            (click)="generateFromMealPlans(shoppingList)"
+            title="Aus Mahlzeitenplänen generieren"
+            [disabled]="shoppingList.is_completed"
+          >
+            <i class="bi bi-magic"></i>
+            Generieren
+          </button>
+          
+          <div class="action-dropdown">
+            <button class="action-btn more-btn" title="Weitere Aktionen">
+              <i class="bi bi-three-dots"></i>
+            </button>
+            <div class="dropdown-menu">
+              <button 
+                class="dropdown-item"
+                (click)="openEditModal(shoppingList)"
+              >
+                <i class="bi bi-pencil"></i>
+                Bearbeiten
+              </button>
+              <button 
+                class="dropdown-item delete-item"
+                (click)="openDeleteModal(shoppingList)"
+              >
+                <i class="bi bi-trash"></i>
+                Löschen
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status Badge -->
+        <div class="status-badge" [class.completed]="shoppingList?.is_completed">
+          {{ getStatusText(shoppingList?.is_completed || false) }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="!isLoading && (filteredShoppingLists || []).length === 0">
+      <div class="empty-icon">
+        <i class="bi bi-cart"></i>
+      </div>
+      <h3>Keine Einkaufslisten gefunden</h3>
+      <p *ngIf="searchTerm || selectedStatus !== null">Versuchen Sie es mit anderen Filtern</p>
+      <p *ngIf="!searchTerm && selectedStatus === null">Erstellen Sie Ihre erste Einkaufsliste</p>
+      <div class="empty-actions">
+        <button class="btn btn-primary" (click)="openCreateModal()" *ngIf="!searchTerm && selectedStatus === null">
+          <i class="bi bi-plus-circle"></i>
+          Erste Liste erstellen
+        </button>
+        <button class="btn btn-secondary" (click)="createWeeklyShoppingList()">
+          <i class="bi bi-calendar-week"></i>
+          Wöchentliche Liste
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-state" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <p>Einkaufslisten werden geladen...</p>
+    </div>
+  </div>
+</div>
+
+<!-- Create/Edit Modal -->
+<div class="modal-overlay" *ngIf="showCreateModal || showEditModal" (click)="closeAllModals()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">
+        <i class="bi bi-cart"></i>
+        {{ showCreateModal ? 'Neue Einkaufsliste' : 'Einkaufsliste bearbeiten' }}
+      </h3>
+      <button class="modal-close" (click)="closeAllModals()">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <form (ngSubmit)="saveShoppingList()">
+        <div class="form-group">
+          <label for="listName">Name *</label>
+          <input 
+            type="text" 
+            id="listName"
+            class="form-control"
+            [(ngModel)]="shoppingListForm.name"
+            name="listName"
+            placeholder="Einkaufsliste-Name eingeben"
+            required
+          >
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="startDate">Startdatum *</label>
+            <input 
+              type="date" 
+              id="startDate"
+              class="form-control"
+              [(ngModel)]="shoppingListForm.start_date"
+              name="startDate"
+              required
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="endDate">Enddatum *</label>
+            <input 
+              type="date" 
+              id="endDate"
+              class="form-control"
+              [(ngModel)]="shoppingListForm.end_date"
+              name="endDate"
+              required
+            >
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeAllModals()">
+            Abbrechen
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check"></i>
+            {{ showCreateModal ? 'Erstellen' : 'Speichern' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal-overlay" *ngIf="showDeleteModal" (click)="closeAllModals()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">
+        <i class="bi bi-exclamation-triangle"></i>
+        Einkaufsliste löschen
+      </h3>
+      <button class="modal-close" (click)="closeAllModals()">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <p>Möchten Sie die Einkaufsliste <strong>{{ shoppingListToDelete?.name }}</strong> wirklich löschen?</p>
+      <p class="text-muted">Diese Aktion kann nicht rückgängig gemacht werden. Alle Artikel in dieser Liste werden ebenfalls gelöscht.</p>
+      
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="closeAllModals()">
+          Abbrechen
+        </button>
+        <button type="button" class="btn btn-danger" (click)="confirmDelete()">
+          <i class="bi bi-trash"></i>
+          Löschen
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Items Modal -->
+<div class="modal-overlay items-modal" *ngIf="showItemsModal" (click)="closeAllModals()">
+  <div class="modal-content large-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">
+        <i class="bi bi-list-ul"></i>
+        Artikel: {{ shoppingListToViewItems?.name }}
+      </h3>
+      <button class="modal-close" (click)="closeAllModals()">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body" *ngIf="shoppingListToViewItems">
+      <!-- Items will be loaded via separate component/service call -->
+      <div class="items-placeholder">
+        <div class="placeholder-icon">
+          <i class="bi bi-cart"></i>
+        </div>
+        <p>Artikel-Details werden hier angezeigt</p>
+        <p class="text-muted">{{ shoppingListToViewItems.total_items }} Artikel insgesamt</p>
+        <p class="text-muted">{{ shoppingListToViewItems.purchased_items }} bereits gekauft</p>
+        
+        <!-- Quick Actions -->
+        <div class="item-actions">
+          <button 
+            class="btn btn-primary"
+            (click)="generateFromMealPlans(shoppingListToViewItems)"
+            [disabled]="shoppingListToViewItems.is_completed"
+          >
+            <i class="bi bi-magic"></i>
+            Aus Mahlzeitenplänen generieren
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Debug Panel -->
+<div class="debug-panel" *ngIf="debugMode">
+  <h4>Debug Information</h4>
+  <p>Total Lists: {{ (shoppingLists || []).length }}</p>
+  <p>Filtered Lists: {{ (filteredShoppingLists || []).length }}</p>
+  <p>Search Term: {{ searchTerm }}</p>
+  <p>Selected Status: {{ selectedStatus }}</p>
+  <p>Current Sort: {{ currentSort.value }}</p>
+  <p>Loading: {{ isLoading }}</p>
+</div>
+
+<!-- Debug Toggle -->
+<button class="debug-toggle" (click)="toggleDebugMode()" title="Toggle Debug Mode">
+  <i class="bi bi-bug"></i>
+</button>

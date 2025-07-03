@@ -1,1 +1,245 @@
-<p>categories works!</p>
+<div class="categories-container">
+  <!-- Animated Background -->
+  <div class="animated-background">
+    <div class="floating-shapes">
+      <div class="shape shape-1"></div>
+      <div class="shape shape-2"></div>
+      <div class="shape shape-3"></div>
+      <div class="shape shape-4"></div>
+      <div class="shape shape-5"></div>
+      <div class="shape shape-6"></div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="categories-content">
+    <!-- Header Section -->
+    <div class="categories-header">
+      <div class="header-content">
+        <div class="title-section">
+          <h1 class="categories-title">
+            <i class="bi bi-tags"></i>
+            Kategorien
+          </h1>
+          <p class="categories-subtitle">Verwalten Sie Ihre Rezeptkategorien</p>
+        </div>
+        
+        <div class="header-actions">
+          <button class="btn btn-primary add-btn" (click)="openAddModal()">
+            <i class="bi bi-plus-circle"></i>
+            Neue Kategorie
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search Section -->
+    <div class="search-section">
+      <div class="search-bar">
+        <div class="search-input-wrapper">
+          <i class="bi bi-search search-icon"></i>
+          <input 
+            type="text" 
+            class="search-input" 
+            placeholder="Kategorien durchsuchen..."
+            [value]="searchTerm"
+            (input)="onSearchChange($event)"
+          >
+          <button 
+            class="clear-search-btn"
+            *ngIf="searchTerm"
+            (click)="clearSearch()"
+          >
+            <i class="bi bi-x-circle"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistics Section -->
+    <div class="stats-section">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="bi bi-tags"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">{{ categories.length }}</div>
+            <div class="stat-label">Kategorien</div>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="bi bi-search"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">{{ filteredCategories.length }}</div>
+            <div class="stat-label">Gefiltert</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Categories List -->
+    <div class="categories-list" *ngIf="!isLoading">
+      <div class="categories-grid">
+        <div 
+          class="category-card" 
+          *ngFor="let category of filteredCategories; trackBy: trackByCategory"
+        >
+          <div class="category-header">
+            <div class="category-title">
+              <i class="bi bi-tag"></i>
+              <h3>{{ category.name }}</h3>
+            </div>
+            <div class="category-actions">
+              <button 
+                class="btn btn-sm btn-outline-primary edit-btn"
+                (click)="openEditModal(category)"
+                title="Bearbeiten"
+              >
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button 
+                class="btn btn-sm btn-outline-danger delete-btn"
+                (click)="openDeleteModal(category)"
+                title="Löschen"
+              >
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="category-body">
+            <p class="category-description">{{ category.description || 'Keine Beschreibung' }}</p>
+            <div class="category-meta">
+              <span class="creation-date">
+                <i class="bi bi-calendar"></i>
+                {{ formatDate(category.created_at) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="filteredCategories.length === 0">
+        <div class="empty-icon">
+          <i class="bi bi-tags"></i>
+        </div>
+        <h3>Keine Kategorien gefunden</h3>
+        <p *ngIf="searchTerm">Versuchen Sie es mit einem anderen Suchbegriff</p>
+        <p *ngIf="!searchTerm">Erstellen Sie Ihre erste Kategorie</p>
+        <button class="btn btn-primary" (click)="openAddModal()" *ngIf="!searchTerm">
+          <i class="bi bi-plus-circle"></i>
+          Erste Kategorie erstellen
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-state" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <p>Kategorien werden geladen...</p>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" *ngIf="showAddModal || showEditModal" (click)="closeAllModals()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">
+        <i class="bi bi-tag"></i>
+        {{ showAddModal ? 'Neue Kategorie' : 'Kategorie bearbeiten' }}
+      </h3>
+      <button class="modal-close" (click)="closeAllModals()">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <form (ngSubmit)="saveCategory()">
+        <div class="form-group">
+          <label for="categoryName">Name *</label>
+          <input 
+            type="text" 
+            id="categoryName"
+            class="form-control"
+            [(ngModel)]="categoryForm.name"
+            name="categoryName"
+            placeholder="Kategorie-Name eingeben"
+            required
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="categoryDescription">Beschreibung</label>
+          <textarea 
+            id="categoryDescription"
+            class="form-control"
+            [(ngModel)]="categoryForm.description"
+            name="categoryDescription"
+            rows="3"
+            placeholder="Beschreibung eingeben (optional)"
+          ></textarea>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeAllModals()">
+            Abbrechen
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check"></i>
+            {{ showAddModal ? 'Erstellen' : 'Speichern' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal-overlay" *ngIf="showDeleteModal" (click)="closeAllModals()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">
+        <i class="bi bi-exclamation-triangle"></i>
+        Kategorie löschen
+      </h3>
+      <button class="modal-close" (click)="closeAllModals()">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <p>Möchten Sie die Kategorie <strong>{{ categoryToDelete?.name }}</strong> wirklich löschen?</p>
+      <p class="text-muted">Diese Aktion kann nicht rückgängig gemacht werden.</p>
+      
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="closeAllModals()">
+          Abbrechen
+        </button>
+        <button type="button" class="btn btn-danger" (click)="confirmDelete()">
+          <i class="bi bi-trash"></i>
+          Löschen
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Debug Panel -->
+<div class="debug-panel" *ngIf="debugMode">
+  <h4>Debug Information</h4>
+  <p>Total Categories: {{ categories.length }}</p>
+  <p>Filtered Categories: {{ filteredCategories.length }}</p>
+  <p>Search Term: {{ searchTerm }}</p>
+  <p>Loading: {{ isLoading }}</p>
+</div>
+
+<!-- Debug Toggle -->
+<button class="debug-toggle" (click)="toggleDebugMode()" title="Toggle Debug Mode">
+  <i class="bi bi-bug"></i>
+</button>

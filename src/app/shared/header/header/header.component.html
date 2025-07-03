@@ -1,1 +1,262 @@
-<p>header works!</p>
+<header class="app-header" [class.scrolled]="isScrolled" [class.nav-open]="isNavOpen">
+  <div class="header-container">
+    <!-- Logo/Brand Section -->
+    <div class="brand-section">
+      <button 
+        class="nav-toggle"
+        (click)="toggleNavigation()"
+        [class.active]="isNavOpen"
+        aria-label="Navigation umschalten"
+      >
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+      
+      <div class="brand-logo" routerLink="/dashboard">
+        <div class="logo-icon">
+          <i class="bi bi-book"></i>
+        </div>
+        <span class="brand-text">Rezeptbuch</span>
+      </div>
+    </div>
+
+    <!-- Desktop Navigation -->
+    <nav class="desktop-nav">
+      <ul class="nav-list">
+        <li 
+          *ngFor="let item of navigationItems" 
+          class="nav-item"
+          [class.active]="isActiveRoute(item.route)"
+        >
+          <a 
+            [routerLink]="item.route" 
+            class="nav-link"
+            [title]="item.description"
+          >
+            <i [class]="item.icon"></i>
+            <span>{{ item.label }}</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Header Actions -->
+    <div class="header-actions">
+      <!-- Search Button -->
+      <button 
+        class="action-btn search-btn"
+        (click)="openSearch()"
+        title="Suchen"
+      >
+        <i class="bi bi-search"></i>
+      </button>
+
+      <!-- Quick Actions Dropdown -->
+      <div class="quick-actions-dropdown">
+        <button class="action-btn quick-btn" title="Schnellaktionen">
+          <i class="bi bi-plus-circle"></i>
+        </button>
+        <div class="quick-menu">
+          <button class="quick-item" (click)="quickCreateRecipe()">
+            <i class="bi bi-journal-plus"></i>
+            Neues Rezept
+          </button>
+          <button class="quick-item" (click)="quickCreateShoppingList()">
+            <i class="bi bi-cart-plus"></i>
+            Neue Einkaufsliste
+          </button>
+        </div>
+      </div>
+
+      <!-- User Menu -->
+      <div class="user-menu-container" *ngIf="isAuthenticated">
+        <button 
+          class="user-avatar"
+          (click)="toggleUserMenu()"
+          [class.active]="showUserMenu"
+          [title]="currentUser?.name || 'Benutzermenü'"
+        >
+          <div class="avatar-circle" *ngIf="!currentUser?.avatar">
+            {{ getUserInitials() }}
+          </div>
+          <img 
+            *ngIf="currentUser?.avatar" 
+            [src]="currentUser.avatar" 
+            [alt]="currentUser.name"
+            class="avatar-image"
+          >
+        </button>
+        
+        <div class="user-menu" *ngIf="showUserMenu">
+          <div class="user-info">
+            <div class="user-name">{{ currentUser?.name }}</div>
+            <div class="user-email">{{ currentUser?.email }}</div>
+          </div>
+          
+          <div class="menu-divider"></div>
+          
+          <div class="menu-items">
+            <button class="menu-item" (click)="navigateToProfile()">
+              <i class="bi bi-person"></i>
+              Profil
+            </button>
+            <button class="menu-item" (click)="navigateToSettings()">
+              <i class="bi bi-gear"></i>
+              Einstellungen
+            </button>
+          </div>
+          
+          <div class="menu-divider"></div>
+          
+          <button class="menu-item logout-item" (click)="logout()">
+            <i class="bi bi-box-arrow-right"></i>
+            Abmelden
+          </button>
+        </div>
+      </div>
+
+      <!-- Login Button (when not authenticated) -->
+      <div class="auth-actions" *ngIf="!isAuthenticated">
+        <button class="btn btn-primary" routerLink="/login">
+          <i class="bi bi-box-arrow-in-right"></i>
+          Anmelden
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Navigation Overlay -->
+  <div class="mobile-nav-overlay" *ngIf="isNavOpen" (click)="closeNavigation()"></div>
+  
+  <!-- Mobile Navigation -->
+  <nav class="mobile-nav" [class.open]="isNavOpen">
+    <div class="mobile-nav-header">
+      <div class="mobile-brand">
+        <div class="logo-icon">
+          <i class="bi bi-book"></i>
+        </div>
+        <span class="brand-text">Rezeptbuch</span>
+      </div>
+      <button class="close-nav" (click)="closeNavigation()">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    
+    <div class="mobile-nav-content">
+      <!-- User Info (Mobile) -->
+      <div class="mobile-user-info" *ngIf="isAuthenticated">
+        <div class="user-avatar-mobile">
+          <div class="avatar-circle" *ngIf="!currentUser?.avatar">
+            {{ getUserInitials() }}
+          </div>
+          <img 
+            *ngIf="currentUser?.avatar" 
+            [src]="currentUser.avatar" 
+            [alt]="currentUser.name"
+            class="avatar-image"
+          >
+        </div>
+        <div class="user-details">
+          <div class="user-name">{{ currentUser?.name }}</div>
+          <div class="user-email">{{ currentUser?.email }}</div>
+        </div>
+      </div>
+      
+      <div class="nav-divider" *ngIf="isAuthenticated"></div>
+      
+      <!-- Navigation Items -->
+      <ul class="mobile-nav-list">
+        <li 
+          *ngFor="let item of navigationItems" 
+          class="mobile-nav-item"
+          [class.active]="isActiveRoute(item.route)"
+        >
+          <a 
+            [routerLink]="item.route" 
+            class="mobile-nav-link"
+            (click)="closeNavigation()"
+          >
+            <div class="nav-icon">
+              <i [class]="item.icon"></i>
+            </div>
+            <div class="nav-content">
+              <span class="nav-label">{{ item.label }}</span>
+              <span class="nav-description">{{ item.description }}</span>
+            </div>
+            <div class="nav-arrow">
+              <i class="bi bi-chevron-right"></i>
+            </div>
+          </a>
+        </li>
+      </ul>
+      
+      <div class="nav-divider"></div>
+      
+      <!-- Quick Actions (Mobile) -->
+      <div class="mobile-quick-actions">
+        <h4>Schnellaktionen</h4>
+        <div class="quick-actions-grid">
+          <button class="quick-action-card" (click)="quickCreateRecipe()">
+            <i class="bi bi-journal-plus"></i>
+            <span>Neues Rezept</span>
+          </button>
+          <button class="quick-action-card" (click)="quickCreateShoppingList()">
+            <i class="bi bi-cart-plus"></i>
+            <span>Einkaufsliste</span>
+          </button>
+        </div>
+      </div>
+      
+      <!-- User Actions (Mobile) -->
+      <div class="mobile-user-actions" *ngIf="isAuthenticated">
+        <div class="nav-divider"></div>
+        <ul class="user-actions-list">
+          <li>
+            <button class="user-action-item" (click)="navigateToProfile()">
+              <i class="bi bi-person"></i>
+              <span>Profil</span>
+            </button>
+          </li>
+          <li>
+            <button class="user-action-item" (click)="navigateToSettings()">
+              <i class="bi bi-gear"></i>
+              <span>Einstellungen</span>
+            </button>
+          </li>
+          <li>
+            <button class="user-action-item logout-action" (click)="logout()">
+              <i class="bi bi-box-arrow-right"></i>
+              <span>Abmelden</span>
+            </button>
+          </li>
+        </ul>
+      </div>
+      
+      <!-- Login Actions (Mobile) -->
+      <div class="mobile-auth-actions" *ngIf="!isAuthenticated">
+        <div class="nav-divider"></div>
+        <button class="mobile-login-btn" routerLink="/login">
+          <i class="bi bi-box-arrow-in-right"></i>
+          Anmelden
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Breadcrumb (Optional) -->
+  <div class="breadcrumb-section" *ngIf="currentRoute !== '/dashboard'">
+    <div class="header-container">
+      <div class="breadcrumb">
+        <span class="breadcrumb-item">
+          <i class="bi bi-house"></i>
+          Dashboard
+        </span>
+        <i class="bi bi-chevron-right breadcrumb-separator"></i>
+        <span class="breadcrumb-item active">
+          {{ getRouteTitle() }}
+        </span>
+      </div>
+    </div>
+  </div>
+</header>
